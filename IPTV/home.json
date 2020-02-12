@@ -1,46 +1,46 @@
 [
   {
     "title": "央视综合 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV1.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV1.png"
   },
   {
     "title": "央视综艺 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV3.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV3.png"
   },
   {
     "title": "央视体育 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV5.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV5.png"
   },
   {
     "title": "央视记录 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV9.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV9.png"
   },
   {
     "title": "央视新闻",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV13.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV13.png"
   },
   {
     "title": "央视体育 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/CCTV/CCTV14.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/CCTV14.png"
   },
   {
     "title": "湖南卫视 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/ws/hunan.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/hunan.png"
   },
   {
     "title": "东方卫视 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/ws/dongfang.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/dongfang.png"
   },
   {
     "title": "江西卫视 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/ws/jiangxi.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/jiangxi.png"
   },
   {
     "title": "浙江卫视 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/ws/zhejiang.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/zhejiang.png"
   },
   {
     "title": "民生休闲 HD",
-    "logo": "http://epg.51zmt.top:8000/tb1/ws/zhejiang.png"
+    "logo": "https://raw.githubusercontent.com/Yonsm/DIY/master/IPTV/LOGO/zhejiang6.png"
   }
 ]

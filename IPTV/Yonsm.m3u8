@@ -34,16 +34,18 @@ http://192.168.1.1:4000/rtp/233.50.201.124:5140
 http://192.168.1.1:4000/rtp/233.50.201.15:5140
 #EXTINF:16, group-title="央视" tvg-name="CCTV16", 央视NEWS HD
 http://192.168.1.1:4000/rtp/233.50.201.126:5140
-##EXTINF:17, group-title="央视" tvg-name="CCTV5+", 央视赛事 HD
-#http://ivi.bupt.edu.cn/hls/cctv5phd.m3u8
+#EXTINF:17, group-title="央视" tvg-name="CCTV5+", 央视赛事 HD
+http://ivi.bupt.edu.cn/hls/cctv5phd.m3u8
 
-#EXTINF:17, group-title="央视" tvg-name="CCTV3", 央视综艺
+#EXTINF:18, group-title="央视" tvg-name="CCTV3", 央视综艺
 http://ivi.bupt.edu.cn/hls/cctv3.m3u8
+#EXTINF:19, group-title="央视" tvg-name="CCTV6", 央视电影
+http://ivi.bupt.edu.cn/hls/cctv6.m3u8
 
-#EXTINF:18, group-title="卫视", 凤凰资讯
-rtmp://ivi.bupt.edu.cn:1935/livetv/fhzx
-#EXTINF:19, group-title="卫视", 凤凰中文
-rtmp://ivi.bupt.edu.cn:1935/livetv/fhzw
+##EXTINF:18, group-title="卫视", 凤凰资讯
+#rtmp://ivi.bupt.edu.cn:1935/livetv/fhzx
+##EXTINF:19, group-title="卫视", 凤凰中文
+#rtmp://ivi.bupt.edu.cn:1935/livetv/fhzw
 
 #EXTINF:20, group-title="卫视", 东南卫视 HD
 http://192.168.1.1:4000/rtp/233.50.201.146:5140

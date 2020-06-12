@@ -1,17 +1,18 @@
 #!/bin/sh
 
-#TODO:
 LAN_DOMAIN=lan
-ADMIN_PASS=admin
 PPOE_NAME=
 PPPOE_PASS=
+ADMIN_PASS=admin
 WIFI_PASS=12345678
 WIFI_STA_SSID=
 DDNS_NAME=
 DDNS_PASS=
+DDNS_HOST=
+
 
 [ -z $1 ] && echo "Usage: $0 <NAME> [SSID]" && exit
-[ "${1::1}" != "R" ] ADMIN_PASS=$WIFI_PASS
+[ "${1::1}" != "R" ] && ADMIN_PASS=$WIFI_PASS
 
 # WIFI
 if [ ! -z `nvram get rt_wpa_psk` ]; then

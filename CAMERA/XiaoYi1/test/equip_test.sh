@@ -10,6 +10,8 @@ cp $sd/index.html /home/web/
 ln -s /tmp/hd1/record /home/web/
 ln -s /tmp/hd1/record_sub /home/web/
 
+#echo CST > /etc/TZ
+
 if [ ! -f $sd/equip_alt.sh ]; then
     sed -i 's/^ifconfig eth0/#&/g' /etc/init.d/S80network
     sed -i 's/^ifconfig eth0/#&/' /home/init.sh

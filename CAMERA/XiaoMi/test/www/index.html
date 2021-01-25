@@ -6,7 +6,7 @@
 </head>
 <body>
   <h1>摄像头控制台</h1>
-  <p>由 <a href="https://github.com/Yonsm/DIY/CAMERA/" target="_blank">Yonsm.NET</a> 倾情提供，欢迎随便使用。</p>
+  <p>由 <a href="https://github.com/Yonsm/DIY/CAMERA/" target="_blank">Yonsm.NET</a> 倾情提供，欢迎使用。</p>
 
   <h2>视频回放</h2>
   <ul>
@@ -22,10 +22,10 @@
     <li><a id="ch0_3" href="">音频直播</a></li>
   </ul>
 
-  <script type="text/javascript">
-      document.getElementById("ch0_0").href="rtsp://"+location.host+"/ch0_0.h264";
-      document.getElementById("ch0_1").href="rtsp://"+location.host+"/ch0_1.h264";
-      document.getElementById("ch0_3").href="rtsp://"+location.host+"/ch0_3.h264";
+  <script>
+      for (var i = 0; i < 4; i++) 
+        if (i != 2)
+          document.getElementById("ch0_" + i).href="rtsp://" + location.host + "/ch0_" + i + ".h264";
   </script>
 </body>
 </html>

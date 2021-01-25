@@ -1,7 +1,7 @@
 #!/bin/sh
-cd ${0%/*}
+sd=`dirname $(readlink -f $0)`
+cd $sd
 ./lighttpd -f lighttpd.conf
 
 #telnet camera with root
-sd=`dirname $0`
-ln -s $sd/autorun.sh /mnt/data/imi/imi_init/S89autorun
+[ ! -f /mnt/data/imi/imi_init/S89autorun ] && ln -s $sd/autorun.sh /mnt/data/imi/imi_init/S89autorun

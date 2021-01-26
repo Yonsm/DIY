@@ -18,14 +18,14 @@
   <h2>视频直播</h2>
   <ul>
     <li><a id="ch0_0" href="">高清视频直播</a></li>
-    <li><a id="ch0_1" href="">标清视频直播</a></li>
-    <li><a id="ch0_3" href="">音频直播</a></li>
+    <!--li><a id="ch0_1" href="">标清视频直播</a></li>
+    <li><a id="ch0_3" href="">音频直播</a></li-->
   </ul>
 
   <script>
-      for (var i = 0; i < 4; i++) 
-        if (i != 2)
-          document.getElementById("ch0_" + i).href="rtsp://" + location.host + "/ch0_" + i + ".h264";
+      for (var i = 0; i < 1; i++)
+        //if (i != 2)
+          document.getElementById("ch0_" + i).href="rtsp://" + location.host + "/live/ch00_" + i + ".h264";
   </script>
 </body>
 </html>

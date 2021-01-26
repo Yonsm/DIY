@@ -1,3 +1,5 @@
+小蚁智能摄像机
+
 一、升级固件`【可选】`
 
 1. 到[小蚁官方](http://www.xiaoyi.com/home/firmware/download/)下载[最新固件](http://download.xiaoyi.com/firmware/smarthomecam/1.8.7.0C_201705091058home.zip)

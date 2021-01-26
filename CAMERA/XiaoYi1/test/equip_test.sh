@@ -4,7 +4,7 @@
 echo "root:12345678" | chpasswd
 
 sd=`dirname $0`
-ln -s $sd/autorun.sh /etc/init.d/S89autorun
+ln -s $sd/init.sh /etc/init.d/S99init
 
 cp $sd/www/index.html /home/web/
 ln -s /tmp/hd1/record /home/web/

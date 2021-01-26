@@ -9,6 +9,5 @@
 
 二、破解使用
 
-1. 把 `diy` 目录拷贝到 TF 卡上，并插入到设备；
-2. `telnet camera_ip`，用户名 `root`（不需要密码）；执行 `ln -s /mnt/media/mmcblk0p1/diy/init.sh /mnt/data/imi/imi_init/S99init`
-3. 重启设备，然后访问 `http://camera_ip`。
+1. 把 `diy` `manufacture` 目录拷贝到 TF 卡上，并插入到设备；
+2. 重启设备，然后访问 `http://camera_ip`。

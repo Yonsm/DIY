@@ -1,7 +1,5 @@
 #!/bin/sh
-[ "$1" == "stop" ] && exit
-
-cd `dirname $0`
+cd ${0%/*}
 
 [ -f busybox ] && ./busybox telnetd
 

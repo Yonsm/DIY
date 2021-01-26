@@ -9,5 +9,5 @@
 
 ## 二、破解使用
 
-1. 把 `diy` `manufacture` 目录拷贝到 TF 卡上，并插入到设备；
-2. 重启设备，然后访问 `http://camera_ip`。
+1. 把 `diy` `manufacture` 拷贝到 TF 卡，并插入到摄像机中；
+2. 重启设备后访问 `http://camera_ip`。

@@ -6,7 +6,7 @@
 </head>
 <body>
   <h1>摄像头控制台</h1>
-  <p>由 <a href="https://github.com/Yonsm/DIY/CAMERA/" target="_blank">Yonsm.NET</a> 倾情提供，欢迎使用。</p>
+  <p>由 <a href="https://github.com/Yonsm/DIY/tree/master/CAMERA" target="_blank">Yonsm.NET</a> 倾情提供，欢迎使用。</p>
 
   <h2>视频回放</h2>
   <ul>
@@ -17,15 +17,11 @@
 
   <h2>视频直播</h2>
   <ul>
-    <li><a id="ch0_0" href="">高清视频直播</a></li>
-    <!--li><a id="ch0_1" href="">标清视频直播</a></li>
-    <li><a id="ch0_3" href="">音频直播</a></li-->
+    <li><a id="ch0_0" href="">视频直播</a></li>
   </ul>
 
   <script>
-      for (var i = 0; i < 1; i++)
-        //if (i != 2)
-          document.getElementById("ch0_" + i).href="rtsp://" + location.host + "/live/ch00_" + i + ".h264";
+    document.getElementById("ch0_" + i).href="rtsp://" + location.host + "/live/ch00_0.h264";
   </script>
 </body>
 </html>

@@ -7,3 +7,4 @@ cd ${0%/*}
 [ -f rtspd ] && ./rtspd -s &
 [ -f rtspsvr ] && ./rtspsvr &
 [ -f rtsp_basic ] && ./rtsp_basic &
+[ -f dropbearmulti ] && ./dropbearmulti dropbear -E -B -r ./dropbear_ecdsa_host_key

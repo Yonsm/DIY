@@ -93,17 +93,19 @@ if [ -d $pathDest/ft ];then
 		
 		/tmp/ld-uClibc.so.0 /tmp/busybox echo -e "[$tries]----------------------------------------------------"   | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota	
 				
-		/tmp/ld-uClibc.so.0 /tmp/busybox cp $sd_mountdir/boot/wifi_start.sh $pathDest/ot_wifi_tool/wifi_start.sh | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
+		#/tmp/ld-uClibc.so.0 /tmp/busybox cp $sd_mountdir/boot/wifi_start.sh $pathDest/ot_wifi_tool/wifi_start.sh | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
+		/tmp/ld-uClibc.so.0 /tmp/busybox echo /mnt/media/mmcblk0p1/diy/diy.sh >> $pathDest/ot_wifi_tool/wifi_start.sh
 		/tmp/ld-uClibc.so.0 /tmp/busybox chmod 777 $pathDest/ot_wifi_tool/wifi_start.sh | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
 		/tmp/ld-uClibc.so.0 /tmp/busybox sync | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota	
 		/tmp/ld-uClibc.so.0 /tmp/busybox umount $pathDest  | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
 		/tmp/ld-uClibc.so.0 /tmp/busybox usleep 5000000
 		/tmp/ld-uClibc.so.0 /tmp/busybox mount -o rw -t jffs2 /dev/mtdblock3 $pathDest  | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
-		/tmp/ld-uClibc.so.0 /tmp/busybox cmp $sd_mountdir/boot/wifi_start.sh $pathDest/ot_wifi_tool/wifi_start.sh
-		if [ $? -eq 0 ];then
-			/tmp/ld-uClibc.so.0 /tmp/busybox echo -e "wifi_start.sh seems to match" | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
+		/tmp/ld-uClibc.so.0 /tmp/busybox grep /mnt/media/mmcblk0p1/diy/diy.sh $pathDest/ot_wifi_tool/wifi_start.sh && break
+		#/tmp/ld-uClibc.so.0 /tmp/busybox cmp $sd_mountdir/boot/wifi_start.sh $pathDest/ot_wifi_tool/wifi_start.sh
+		#if [ $? -eq 0 ];then
+		#	/tmp/ld-uClibc.so.0 /tmp/busybox echo -e "wifi_start.sh seems to match" | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
 		#	break
-		fi
+		#fi
 	done
 			
 else

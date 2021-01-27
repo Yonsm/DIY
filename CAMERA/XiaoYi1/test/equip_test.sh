@@ -1,7 +1,7 @@
 
 #!/bin/sh
 
-echo "root:12345678" | chpasswd
+echo "root:1234" | chpasswd
 
 diy=`dirname $0`
 echo "$diy/diy.sh" > /etc/init.d/S99diy

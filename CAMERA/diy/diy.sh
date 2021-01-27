@@ -8,7 +8,7 @@ if [ -f dropbearmulti ]; then
 	echo "root:1234" | chpasswd
 	touch /var/log/lastlog
 	touch /var/log/wtmp
-	./dropbearmulti dropbear -E -R -r ./dropbear_ecdsa_host_key
+	./dropbearmulti dropbear -E -R -r dropbear_ecdsa_host_key
 fi
 
 [ -f busybox ] && ./busybox telnetd

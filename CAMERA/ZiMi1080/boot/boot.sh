@@ -12,7 +12,7 @@ cp /mnt/media/mmcblk0p1/boot/post-ota.sh /mnt/data/miio_ota/post-ota.sh
 cp /mnt/media/mmcblk0p1/boot/inject.sh /tmp/inject.sh
 exit
 
-# Inject in ROM update
+# TODO: Alt injection method not work?
 if [ ! -f /mnt/data/miio_ota/inject.sh ]; then
   cp /mnt/media/mmcblk0p1/boot/inject.sh /mnt/data/miio_ota/inject.sh
   sed -i '2 a/tmp/ld-uClibc.so.0 /tmp/busybox sh /mnt/data/miio_ota/inject.sh' /mnt/data/miio_ota/post-ota.sh

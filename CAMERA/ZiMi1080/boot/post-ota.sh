@@ -2,7 +2,7 @@
 export LD_LIBRARY_PATH=/tmp
 
 /tmp/ld-uClibc.so.0 /tmp/busybox echo "Calling Inject....." | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota
-/tmp/ld-uClibc.so.0 /tmp/busybox sh /mnt/data/miio_ota/inject.sh
+/tmp/ld-uClibc.so.0 /tmp/busybox sh /tmp/inject.sh
 
 
 /tmp/ld-uClibc.so.0 /tmp/busybox echo "OTA: copy log to TF." | /tmp/ld-uClibc.so.0 /tmp/busybox logger -t miio_ota

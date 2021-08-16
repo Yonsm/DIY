@@ -6,7 +6,8 @@ else
 fi
 
 REC_DIR=/mnt/media/mmcblk0p1/MIJIA_RECORD_VIDEO
-LAST_DIR=`ls -1 $REC_DIR | tail -1`
+LAST_PATH=`ls -1d $REC_DIR/*/ | tail -1`
+LAST_DIR=`basename $LAST_PATH`
 LAST_FILE=`ls -1 $REC_DIR/$LAST_DIR/*.${MIME_TYPE##*/} | tail -1`
 
 if [[ "${QUERY_STRING/r=1//}" != "$QUERY_STRING" ]]; then

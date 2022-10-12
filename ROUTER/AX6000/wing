@@ -1,0 +1,466 @@
+#!/bin/sh
+CDIR=$(cd "${0%/*}"; pwd)
+
+if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
+	_MODE=ROUTER
+	_OS=MIWIFI
+	_GFWLIST_CONF=$CDIR/gfwlist.conf
+	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/dnsmasq_gfwlist_ipset.conf
+	PATH=$PATH:$CDIR
+elif [ -d /etc/storage ]; then # Yonsm's dnsmasq with gfwlist and tcpdns
+	_MODE=ROUTER
+	_OS=PADAVAN
+	DNSMASQ_CONF=/etc/storage/dnsmasq/dnsmasq.conf
+	_GFWLIST_CONF=/etc/storage/dnsmasq/gfwlist.txt
+	_GFWLIST_CONF_RO=/etc_ro/gfwlist.txt
+	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/gfwlist_domain.txt
+else
+	_MODE=OTHER
+	if type networksetup >/dev/null 2>&1; then
+		_OS=MACOS
+	else
+		_OS=OTHER
+	fi
+	_GFWLIST_CONF=$CDIR/gfwlist.pac
+	_GFWLIST_URL=https://raw.githubusercontent.com/petronny/gfwlist2pac/master/gfwlist.pac
+fi
+
+usage()
+{
+	echo "Usage: $0 <[start]|restart|stop|pause|resume|status|update|help>"
+	echo
+	echo "$0 [-v[0-5]] <URL>"
+	echo
+	echo "URL begins with ss/ssr/trojan/socks5, you can copy it from Shadowrocket"
+	echo
+	exit 1
+}
+
+update()
+{
+	[ ! -z "$1" ] && _GFWLIST_CONF="$1"
+	curl -k -o $_GFWLIST_CONF $_GFWLIST_URL || exit 1
+
+if [ $_OS = PADAVAN ]; then
+	cat << EOF >> $_GFWLIST_CONF
+pypi.org
+pythonhosted.org
+openwrt.org
+lede-project.org
+facebook-hardware.com
+fbthirdpartypixel.com
+workplace.com
+EOF
+elif [ $_OS = MIWIFI ]; then
+	cat << EOF >> $_GFWLIST_CONF
+server=/pypi.org/127.0.0.1#5353
+ipset=/pypi.org/gfwlist
+server=/pythonhosted.org/127.0.0.1#5353
+ipset=/pythonhosted.org/gfwlist
+server=/openwrt.org>/127.0.0.1#5353
+ipset=/openwrt.org/gfwlist
+server=/lede-project.org/127.0.0.1#5353
+ipset=/lede-project.org/gfwlist
+server=/facebook-hardware.com/127.0.0.1#5353
+ipset=/facebook-hardware.com/gfwlistx
+server=/fbthirdpartypixel.com/127.0.0.1#5353
+ipset=/fbthirdpartypixel.com/gfwlist
+server=/workplace.com/127.0.0.1#5353
+ipset=/workplace.com/gfwlist
+EOF
+fi
+}
+
+split_str()
+{
+	case "$4" in
+	"")
+		export $1=
+		export $2=
+		;;
+	*"$3"*)
+		export $1=${4%%"$3"*}
+		export $2=${4#*"$3"}
+		;;
+	*)
+		export $1="$4"
+		export $2=
+		;;
+	esac
+}
+
+rsplit_str()
+{
+	case "$4" in
+	"")
+		export $1=
+		export $2=
+		;;
+	*"$3"*)
+		export $1=${4%"$3"*}
+		export $2=${4##*"$3"}
+		;;
+	*)
+		export $1=
+		export $2="$4"
+		;;
+	esac
+}
+
+parse_query()
+{
+	local IFS_BAK=$IFS
+	IFS=\&
+	for ITEM in $1; do
+		split_str KEY VAL = $ITEM
+		export _$KEY=$VAL
+		# echo "_$KEY=$VAL"
+	done
+	IFS=$IFS_BAK
+}
+
+parse_uri()
+{
+	split_str _TEXT _HASH \# $1
+	split_str _SERV_PATH _QUERY ? $_TEXT
+	parse_query $_QUERY
+	split_str _SERV _PATH / $_SERV_PATH
+	rsplit_str _USER_PASS _HOST_PORT @ $_SERV
+	split_str  _USER _PASS : $_USER_PASS
+	split_str _HOST _PORT : $_HOST_PORT
+
+	# echo HASH=$_HASH
+	# echo SERV_PATH=$_SERV_PATH
+	# echo QUERY=$_QUERY
+	# echo PATH=$_PATH
+	# echo USER=$_USER
+	# echo PASS=$_PASS
+	# echo HOST=$_HOST
+	# echo PORT=$_PORT
+}
+
+parse_url()
+{
+	split_str _PROTO _TEXT : "$1" R
+	case "$_TEXT" in
+		//*) _TEXT=${_TEXT:2}
+	esac
+	#echo PROTO=$_PROTO
+	parse_uri $_TEXT
+}
+
+make_url()
+{
+	local URL="$_PROTO://$_USER:$_PASS@$_HOST:$_PORT"
+	[ ! -z $_PATH ] && URL="$URL/$_PATH"
+	[ ! -z $_QUERY ] && URL="$URL?$_QUERY"
+	[ ! -z $_HASH ] && URL="$URL#$_HASH"
+	echo $URL
+}
+
+decode_b64()
+{
+	local CNT=${#1}
+	local REM=$(( $CNT % 4 ))
+	if [ $REM -eq 1 ]; then
+		local TEXT=${1}===
+	elif [ $REM -eq 2 ]; then
+		local TEXT=${1}==
+	elif [ $REM -eq 3 ]; then
+		local TEXT=${1}=
+	else
+		local TEXT=$1
+	fi
+	echo $TEXT | base64 -d
+}
+
+prepare()
+{
+	if [ ! -f $_GFWLIST_CONF ]; then
+		if [ -f "$_GFWLIST_CONF_RO" ]; then
+			_GFWLIST_CONF=$_GFWLIST_CONF_RO
+		else
+			update
+		fi
+	fi
+}
+
+inject()
+{
+if [ $_MODE = ROUTER ]; then
+	iptables -t nat $1 OUTPUT -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
+	iptables -t nat $1 PREROUTING -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
+elif [ $_OS = MACOS ]; then
+	if [ -z "$WING_NETWORK" ]; then
+		local SDEV=`route get example.com 2> /dev/null | grep interface`
+		local SDEV=${SDEV:13}
+		local IFS_BAK=$IFS
+		IFS=$'\n'
+		for LINE in `networksetup -listnetworkserviceorder`; do
+			echo $LINE | grep $SDEV > /dev/null 2>&1
+			if [ $? = 0 ]; then
+				WING_NETWORK=${LAST_LINE:4}
+				break
+			fi
+			LAST_LINE=$LINE
+		done
+		IFS=$IFS_BAK
+
+		[ -z "$WING_NETWORK" ] && echo "Could not find valid network" && exit 2
+	fi
+
+	if [ "$WING_PAC" = "1" ]; then
+		if [ ! -f /Library/WebServer/Documents/gfwlist.pac ]; then
+			sudo cp $_GFWLIST_CONF /Library/WebServer/Documents/gfwlist.pac
+			sudo apachectl restart
+		fi
+		local SET_PROXY_STATE=-setautoproxystate
+		local SET_PROXY_PARAM="setautoproxyurl $WING_NETWORK http://127.0.0.1/gfwlist.pac"
+	else
+		local SET_PROXY_STATE=-setsocksfirewallproxystate
+		local SET_PROXY_PARAM="setsocksfirewallproxy $WING_NETWORK $2 $3"
+	fi
+
+	if [ $1 == -C ]; then
+		networksetup $SET_PROXY_STATE $WING_NETWORK on
+		return 0
+	elif [ $1 == -D ]; then
+		networksetup $SET_PROXY_STATE $WING_NETWORK off
+	else
+		echo "Local Network: $WING_NETWORK"
+		echo "export ALL_PROXY=socks5://$2:$3"
+		networksetup $SET_PROXY_PARAM
+	fi
+fi
+}
+
+proxy()
+{
+	prepare
+
+if [ $_MODE = ROUTER ]; then
+	ulimit -n 65536
+
+	# ipt2socks
+	case "$2" in
+	*socks5)
+		local IPT2SOCKS_CMD="ipt2socks -s $3 -p $4 -b 0.0.0.0 -l 1088 -T -4 -R -j `cat /proc/cpuinfo|grep processor|wc -l`"
+		if [ $1 -ge 5 ]; then
+			$IPT2SOCKS_CMD &
+		elif [ $1 -ge 2 ]; then
+			nohup $IPT2SOCKS_CMD &> /tmp/ipt2socks.log &
+		elif [ $2 != socks5 ]; then
+			nohup $IPT2SOCKS_CMD -v &> /tmp/ipt2socks.log &
+		else
+			$IPT2SOCKS_CMD -v &
+		fi
+		WING_NAT=0
+		;;
+	*)
+		WING_NAT=1
+	esac
+
+	# iptables
+	ipset create gfwlist iphash
+	ipset add gfwlist 8.8.8.8
+
+if [ $_OS = PADAVAN ]; then
+	# dnsmasq
+	GFWLIST_LINE="gfwlist=$_GFWLIST_CONF"
+	if ! grep "$GFWLIST_LINE" $_DNSMASQ_CONF > /dev/null; then
+		killall dnsmasq
+		echo "$GFWLIST_LINE" >> $_DNSMASQ_CONF
+		dnsmasq
+	fi
+else
+	dns-forwarder -p 5353 &
+	ln -s $_GFWLIST_CONF /tmp/dnsmasq.d/
+	/etc/init.d/dnsmasq restart
+fi
+
+fi
+
+	inject -A $3 $4
+}
+
+sscmd()
+{
+	if [ "$WING_NAT" = "1" ]; then
+		local RUN_TYPE=redir
+		local LOCAL_PORT=1088
+	else
+		local RUN_TYPE=local
+		local LOCAL_PORT=1080
+	fi
+	[ $1 -le 3 ] && RUN_TYPE="$RUN_TYPE -v"
+	XCMD="$2-$RUN_TYPE -s $_HOST -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
+}
+
+start()
+{
+	if [ -z $2 ]; then
+		[ -z $WING_URL ] && usage
+	else
+		WING_URL=$2
+	fi
+
+	parse_url $WING_URL
+	if [ $_PROTO = socks5 ]; then
+		[ -z $_PORT ] && _PORT=1080
+		proxy $1 $_PROTO $_HOST $_PORT
+	else
+		[ -z $_PORT ] && _PORT=443
+		proxy $1 $_PROTO 127.0.0.1 1080
+	fi
+
+	case "$_PROTO" in
+	trojan*)
+		if [ "$WING_NAT" = "1" ]; then
+			local RUN_TYPE=nat
+			local LOCAL_PORT=1088
+		else
+			_PROTO=trojan-socks5
+			local RUN_TYPE=client
+			local LOCAL_PORT=1080
+		fi
+		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"$_USER\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
+		XCMD="trojan -c /tmp/trojan.conf"
+		;;
+	ssr*)
+		if [ -z $_USER ]; then
+			parse_uri `decode_b64 $_HOST`
+			split_str _PORT _TEXT : $_PORT
+			split_str _PATH _TEXT : $_TEXT
+			split_str _USER _TEXT : $_TEXT
+			split_str _HASH _TEXT : $_TEXT
+			split_str _PASS _TEXT : $_TEXT
+			_PASS=`decode_b64 $_PASS`
+			_obfsparam=`decode_b64 $_obfsparam`
+			_protoparam=`decode_b64 $_protoparam`
+			_QUERY="protoparam=$_protoparam&obfsparam=$_obfsparam"
+		fi
+		if type ssr-client >/dev/null 2>&1; then
+			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
+			XCMD="ssr-client -c /tmp/ssr.conf"
+		else
+			sscmd $1 ssr "-O $_PATH -G $_protoparam -o $_HASH -g $_obfsparam"
+		fi
+		;;
+	ss*)
+		if [ -z $_USER ]; then
+			parse_uri `decode_b64 $_HOST`
+		elif [ -z $_PASS ]; then
+			split_str _USER _PASS : `decode_b64 $_USER`
+		fi
+		sscmd $1 ss
+		;;
+	*)
+		[ $_PROTO != socks5 ] && usage
+		return
+		;;
+	esac
+
+	echo "export WING_URL=`make_url`"
+	echo
+	if [ $1 -ge 5 ]; then
+		$XCMD &
+	elif [ $1 -ge 2 ]; then
+		nohup "$XCMD" &> /tmp/wing.log &
+	else
+if [ $_MODE = ROUTER ]; then
+		$XCMD &
+else
+		$XCMD
+		stop
+fi
+	fi
+}
+
+stop()
+{
+	inject -D 2> /dev/null
+
+
+	killall trojan ssr-local ssr-redir ss-local ss-redir ipt2socks dns-forwarder 2> /dev/null
+	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
+
+if [ $_MODE = ROUTER ]; then
+	ipset destroy gfwlist
+	[ "$1" == "-R" ] && return
+
+if [ $_OS = PADAVAN ]; then
+	prepare
+	sed -i /gfwlist=${_GFWLIST_CONF//\//\\/}/d $_DNSMASQ_CONF
+	killall dnsmasq
+	dnsmasq
+else
+	rm /tmp/dnsmasq.d/gfwlist.conf
+	/etc/init.d/dnsmasq restart
+fi
+
+fi
+
+	echo Wing service stopped
+}
+
+status()
+{
+	case "$1" in
+	2) tail -f /tmp/ipt2socks.log;;
+	t) iptables -t nat -L PREROUTING && iptables -t nat -L OUTPUT;;
+	s) ipset -L gfwlist | more;;
+	y) tail -f /tmp/syslog.log;;
+	*) tail -f /tmp/wing.log;;
+	esac
+}
+
+case "$1" in
+start)
+	start 5 "$2"
+	;;
+-t|t|stop)
+	stop
+	;;
+-R|R|restart)
+	stop -R
+	sleep 1
+	start 1 "$2"
+	;;
+-p|p|pause)
+	inject -D
+	;;
+-r|r|resume)
+if [ $_MODE = ROUTER ]; then
+	ipset test gfwlist 8.8.8.8 || exit 3
+fi
+	inject -C || inject -A
+	;;
+-s|s|status)
+	status "$2"
+	;;
+-u|u|update)
+	update "$2"
+	;;
+-i|i|install)
+if [ $_OS = MIWIFI ]; then
+	uci set firewall.wing=include
+	uci set firewall.wing.type="script"
+	uci set firewall.wing.path="$CDIR/wing start $2"
+	uci set firewall.wing.enabled="1"
+	uci commit firewall
+	uci show firewall.wing
+fi
+	;;
+-h|h|help)
+	usage
+	;;
+-v|v)
+	start 0 "$2"
+	;;
+-v0|-v1|-v2|-v3|-v4|-v5)
+	start ${1:2} "$2"
+	;;
+*)
+	start 1 "$1"
+	;;
+esac

@@ -13,7 +13,7 @@ do
 		echo "scp $FILE root@$1:/data/wing/"
 	fi
 done
-echo "ssh root@$1 '/data/wing/wing -i $2'"
+echo "ssh root@$1 '/data/wing/wing install $2'"
 
 # SSH: https://www.right.com.cn/forum/thread-8253125-1-1.html
 # WEB@Any: vi /etc/nginx/miwifi-webinitrd.conf; Insert 'set $isluci “1”;' before 'set $finalvar $canproxy $isluci'

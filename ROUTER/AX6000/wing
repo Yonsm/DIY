@@ -1,7 +1,7 @@
 #!/bin/sh
-CDIR=$(cd "${0%/*}"; pwd)
 
 if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
+	CDIR=/data/wing # What's the FUCK?
 	_MODE=ROUTER
 	_OS=MIWIFI
 	_GFWLIST_CONF=$CDIR/gfwlist.conf
@@ -15,6 +15,7 @@ elif [ -d /etc/storage ]; then # Yonsm's dnsmasq with gfwlist and tcpdns
 	_GFWLIST_CONF_RO=/etc_ro/gfwlist.txt
 	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/gfwlist_domain.txt
 else
+	CDIR=$(cd "${0%/*}"; pwd)
 	_MODE=OTHER
 	if type networksetup >/dev/null 2>&1; then
 		_OS=MACOS
@@ -24,6 +25,9 @@ else
 	_GFWLIST_CONF=$CDIR/gfwlist.pac
 	_GFWLIST_URL=https://raw.githubusercontent.com/petronny/gfwlist2pac/master/gfwlist.pac
 fi
+
+# date >> /var/log/wing.log
+# echo "MODE=$_MODE OS=$_OS CONF=$_GFWLIST_CONF" >> /var/log/wing.log
 
 usage()
 {
@@ -360,19 +364,17 @@ start()
 		;;
 	esac
 
-	echo "export WING_URL=`make_url`"
-	echo
 	if [ $1 -ge 5 ]; then
 		$XCMD &
 	elif [ $1 -ge 2 ]; then
 		nohup "$XCMD" &> /tmp/wing.log &
-	else
-if [ $_MODE = ROUTER ]; then
+	elif [ $_MODE = ROUTER ]; then
 		$XCMD &
-else
+	else
+		echo "export WING_URL=`make_url`"
+		echo
 		$XCMD
 		stop
-fi
 	fi
 }
 

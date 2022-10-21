@@ -4,6 +4,11 @@
 
 cd `dirname $0`
 
+echo "SSH for AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
+echo "scp ~/.ssh/authorized_keys root@$1:/data/auto_ssh/"
+echo "ssh root@$1 'ln -s /data/auto_ssh/authorized_keys /etc/dropbear/'"
+echo "scp auto_ssh.sh root@$1:/data/auto_ssh/"
+echo
 echo "Execute command as below:"
 echo "ssh root@$1 'mkdir /data/wing'"
 for FILE in `ls|tr " " "?"`
@@ -15,5 +20,4 @@ do
 done
 echo "ssh root@$1 '/data/wing/wing install $2'"
 
-# SSH: https://www.right.com.cn/forum/thread-8253125-1-1.html
 # WEB@Any: vi /etc/nginx/miwifi-webinitrd.conf; Insert 'set $isluci “1”;' before 'set $finalvar $canproxy $isluci'

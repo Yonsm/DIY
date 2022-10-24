@@ -1,4 +1,12 @@
 #!/bin/sh
+# _PROT=socks5
+# _USER=
+# _PASS=
+# _HOST=192.168.1.8
+# _PORT=
+# _PATH=
+# _ARGS=
+# _HASH=
 
 if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
 	CDIR=/data/wing # What's the FUCK?
@@ -50,7 +58,6 @@ if [ $_OS = PADAVAN ]; then
 pypi.org
 pythonhosted.org
 openwrt.org
-lede-project.org
 facebook-hardware.com
 fbthirdpartypixel.com
 workplace.com
@@ -63,8 +70,6 @@ server=/pythonhosted.org/127.0.0.1#5353
 ipset=/pythonhosted.org/gfwlist
 server=/openwrt.org>/127.0.0.1#5353
 ipset=/openwrt.org/gfwlist
-server=/lede-project.org/127.0.0.1#5353
-ipset=/lede-project.org/gfwlist
 server=/facebook-hardware.com/127.0.0.1#5353
 ipset=/facebook-hardware.com/gfwlistx
 server=/fbthirdpartypixel.com/127.0.0.1#5353
@@ -126,38 +131,28 @@ parse_query()
 parse_uri()
 {
 	split_str _TEXT _HASH \# $1
-	split_str _SERV_PATH _QUERY ? $_TEXT
-	parse_query $_QUERY
+	split_str _SERV_PATH _ARGS ? $_TEXT
+	parse_query $_ARGS
 	split_str _SERV _PATH / $_SERV_PATH
 	rsplit_str _USER_PASS _HOST_PORT @ $_SERV
 	split_str  _USER _PASS : $_USER_PASS
 	split_str _HOST _PORT : $_HOST_PORT
-
-	# echo HASH=$_HASH
-	# echo SERV_PATH=$_SERV_PATH
-	# echo QUERY=$_QUERY
-	# echo PATH=$_PATH
-	# echo USER=$_USER
-	# echo PASS=$_PASS
-	# echo HOST=$_HOST
-	# echo PORT=$_PORT
 }
 
 parse_url()
 {
-	split_str _PROTO _TEXT : "$1" R
+	split_str _PROT _TEXT : "$1" R
 	case "$_TEXT" in
 		//*) _TEXT=${_TEXT:2}
 	esac
-	#echo PROTO=$_PROTO
 	parse_uri $_TEXT
 }
 
 make_url()
 {
-	local URL="$_PROTO://$_USER:$_PASS@$_HOST:$_PORT"
+	local URL="$_PROT://$_USER:$_PASS@$_HOST:$_PORT"
 	[ ! -z $_PATH ] && URL="$URL/$_PATH"
-	[ ! -z $_QUERY ] && URL="$URL?$_QUERY"
+	[ ! -z $_ARGS ] && URL="$URL?$_ARGS"
 	[ ! -z $_HASH ] && URL="$URL#$_HASH"
 	echo $URL
 }
@@ -264,9 +259,13 @@ if [ $_MODE = ROUTER ]; then
 		WING_NAT=1
 	esac
 
-	# iptables
+	# ipset for DNS & Telegram
 	ipset create gfwlist iphash
 	ipset add gfwlist 8.8.8.8
+	ipset add gfwlist 91.108.56.0/22
+	ipset add gfwlist 91.108.4.0/22
+	ipset add gfwlist 109.239.140.0/24
+	ipset add gfwlist 149.154.160.0/20
 
 if [ $_OS = PADAVAN ]; then
 	# dnsmasq
@@ -302,28 +301,30 @@ sscmd()
 
 start()
 {
-	if [ -z $2 ]; then
-		[ -z $WING_URL ] && usage
-	else
-		WING_URL=$2
+	if [ -z _PROT ]; then
+		if [ -z $2 ]; then
+			[ -z $WING_URL ] && usage
+			parse_url $WING_URL
+		else
+			parse_url $2
+		fi
 	fi
 
-	parse_url $WING_URL
-	if [ $_PROTO = socks5 ]; then
+	if [ $_PROT = socks5 ]; then
 		[ -z $_PORT ] && _PORT=1080
-		proxy $1 $_PROTO $_HOST $_PORT
+		proxy $1 $_PROT $_HOST $_PORT
 	else
 		[ -z $_PORT ] && _PORT=443
-		proxy $1 $_PROTO 127.0.0.1 1080
+		proxy $1 $_PROT 127.0.0.1 1080
 	fi
 
-	case "$_PROTO" in
+	case "$_PROT" in
 	trojan*)
 		if [ "$WING_NAT" = "1" ]; then
 			local RUN_TYPE=nat
 			local LOCAL_PORT=1088
 		else
-			_PROTO=trojan-socks5
+			_PROT=trojan-socks5
 			local RUN_TYPE=client
 			local LOCAL_PORT=1080
 		fi
@@ -341,7 +342,7 @@ start()
 			_PASS=`decode_b64 $_PASS`
 			_obfsparam=`decode_b64 $_obfsparam`
 			_protoparam=`decode_b64 $_protoparam`
-			_QUERY="protoparam=$_protoparam&obfsparam=$_obfsparam"
+			_ARGS="protoparam=$_protoparam&obfsparam=$_obfsparam"
 		fi
 		if type ssr-client >/dev/null 2>&1; then
 			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
@@ -359,7 +360,7 @@ start()
 		sscmd $1 ss
 		;;
 	*)
-		[ $_PROTO != socks5 ] && usage
+		[ $_PROT != socks5 ] && usage
 		return
 		;;
 	esac

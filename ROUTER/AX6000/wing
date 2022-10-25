@@ -301,13 +301,11 @@ sscmd()
 
 start()
 {
-	if [ -z _PROT ]; then
-		if [ -z $2 ]; then
-			[ -z $WING_URL ] && usage
-			parse_url $WING_URL
-		else
-			parse_url $2
-		fi
+	if [ ! -z $2 ]; then
+		parse_url $2
+	elif [ -z $_PROT ]; then
+		[ -z $WING_URL ] && usage
+		parse_url $WING_URL
 	fi
 
 	if [ $_PROT = socks5 ]; then

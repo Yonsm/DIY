@@ -19,6 +19,3 @@ do
 	fi
 done
 echo "ssh root@$1 '/data/wing/wing install $2'"
-
-echo "ssh root@$1 \"sed -i 's/canproxy \\\$isluci/canproxy 1/g' /etc/nginx/miwifi-webinitrd.conf\""
-echo "ssh root@$1 '/etc/init.d/nginx restart'"

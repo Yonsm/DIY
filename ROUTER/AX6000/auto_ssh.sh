@@ -1,9 +1,17 @@
 #!/bin/sh
 
+ln -s /data/auto_ssh/authorized_keys /etc/dropbear/
+
+ln -sf /data/auto_ssh/cert.crt /etc/nginx/
+ln -sf /data/auto_ssh/cert.key /etc/nginx/
+sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
+#sed -i 's/www.router.miwifi.com/router.gq/' /etc/nginx/conf.d/443.conf
+sed -i 's/443/81/' /etc/nginx/conf.d/443.conf
+/etc/init.d/nginx restart
+
+#
 host_key=/etc/dropbear/dropbear_rsa_host_key
 host_key_bk=/data/auto_ssh/dropbear_rsa_host_key
-
-ln -s /data/auto_ssh/authorized_keys /etc/dropbear/
 
 # 如果存在备份的SSH密钥，将备份的密钥链接到dropbear使用的密钥
 if [ -f $host_key_bk ]; then

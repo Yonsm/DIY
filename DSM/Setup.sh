@@ -16,9 +16,20 @@ busybox passwd admin
 busybox passwd root
 
 # IPTV
+# USB NET: https://www.31du.cn/software/dsm7-2-5g-rtl815x.html
+# https://github.com/bb-qq/r8152/releases/download/2.16.3-1/r8152-monaco-2.16.3-1.spk
 opkg install udpxy
-cat /opt/etc/init.d/S29udpxy 
-#ARGS="-m eth1 -p 4000 -B 1Mb -c 10 -M 120"
+cat << \EOF > /opt/etc/init.d/S29udpxy
+#!/bin/sh
+ENABLED=yes
+PROCS=udpxy
+ARGS="-m eth1 -p 4000 -B 1Mb -c 10 -M 120"
+PREARGS=""
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+. /opt/etc/init.d/rc.func
+EOF
+
 
 # Misc
 opkg install iperf3
@@ -30,7 +41,11 @@ opkg install python3 python3-pip
 
 # Home Assistant
 opkg install mosquitto-nossl
-cat /opt/etc/mosquitto/mosquitto.conf
+cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
+allow_zero_length_clientid true
+listener 1883
+allow_anonymous true
+EOF
 
 opkg gcc python3-dev
 #opkg install python-dev

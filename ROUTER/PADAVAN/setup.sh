@@ -58,3 +58,36 @@ fi
 # NVRAM
 scp nvram.sh $HOST:/tmp
 ssh $HOST "/tmp/nvram.sh $NAME $3"
+exit 0
+
+# Entware
+umount /dev/sdb1
+mkfs.ext4 -m 0 -L opt /dev/sdb1
+mount -t ext4 /dev/sdb1 /opt
+wget -O - http://bin.entware.net/mipselsf-k3.4/installer/generic.sh | /bin/sh
+
+# TODO: Entware Startup
+PATH=/opt/bin:/opt/sbin:$PATH
+#mount -o bind /media/USBD /opt
+mount -t ext4 /dev/sdb1 /opt
+/opt/etc/init.d/rc.unslung start
+
+# Mosquitto
+opkg install mosquitto-nossl
+cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
+allow_zero_length_clientid true
+listener 1883
+allow_anonymous true
+EOF
+
+# Python
+opkg install python3 python3-pip
+export HOME=/opt/home
+export TMPDIR=/opt/tmp
+#python3 -m pip install --upgrade pip setuptools
+
+# Home Assistant: https://post.smzdm.com/p/apzkg5kw/
+opkg install gcc python3-dev
+wget -qO- http://bin.entware.net/mipselsf-k3.4/include/include.tar.gz | tar xvz -C /opt/include
+pip install homeasssistant
+

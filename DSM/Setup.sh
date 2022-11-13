@@ -35,11 +35,7 @@ EOF
 opkg install iperf3
 cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest
 
-# Python3
-opkg install python3 python3-pip
-#python3 -m pip install --upgrade pip setuptools
-
-# Home Assistant
+# Mosquitto
 opkg install mosquitto-nossl
 cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
 allow_zero_length_clientid true
@@ -47,6 +43,11 @@ listener 1883
 allow_anonymous true
 EOF
 
+# Python3
+opkg install python3 python3-pip
+#python3 -m pip install --upgrade pip setuptools
+
+# Home Assistant
 opkg gcc python3-dev
 #opkg install python-dev
 #opkg install busybox ldd make gawk sed
@@ -67,13 +68,3 @@ d /opt/lib
 ln -s libffi.so.8 libffi.so
 
 pip3 install homeassistant
-
-
-# Install On Padavan: https://post.smzdm.com/p/apzkg5kw/
-export HOME=/opt/pip
-export TMPDIR=/opt/tmp
-#--no-cache-dir
-wget -O - http://bin.entware.net/mipselsf-k3.4/installer/generic.sh | /bin/sh
-opkg install python3 python3-pip
-opkg install gcc python3-dev
-pip install homeasssistant

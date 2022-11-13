@@ -30,23 +30,18 @@ PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:
 . /opt/etc/init.d/rc.func
 EOF
 
-# Mosquitto
-opkg install mosquitto-nossl
-cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
-allow_zero_length_clientid true
-listener 1883
-allow_anonymous true
-EOF
-
 # Python3
 opkg install python3 python3-pip
-#python3 -m pip install --upgrade pip setuptools
+python3 -m pip install --upgrade pip setuptools
 
-# Home Assistant
+# Misc
+opkg install iperf3
+cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest
+exit
+
+# ======== Home Assistant: ERROR on Rust ========
 opkg gcc python3-dev
 #opkg install python-dev
-#opkg install busybox ldd make gawk sed
-#opkg install coreutils-install
 
 cd  /opt
 #wget -qO- http://pkg.entware.net/binaries/armv7/include/include.tar.gz | tar xvz -C /opt/include
@@ -65,6 +60,10 @@ ln -s libffi.so.8 libffi.so
 
 pip3 install homeassistant
 
-# Misc
-opkg install iperf3
-cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest
+# Mosquitto
+opkg install mosquitto-nossl
+cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
+allow_zero_length_clientid true
+listener 1883
+allow_anonymous true
+EOF

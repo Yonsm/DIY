@@ -67,10 +67,13 @@ mount -t ext4 /dev/sdb1 /opt
 wget -O - http://bin.entware.net/mipselsf-k3.4/installer/generic.sh | /bin/sh
 
 # TODO: Entware Startup
-PATH=/opt/bin:/opt/sbin:$PATH
-#mount -o bind /media/USBD /opt
+#mount -o bind /media/opt /opt
+umount /dev/sdb1
 mount -t ext4 /dev/sdb1 /opt
+sleep 1
 /opt/etc/init.d/rc.unslung start
+#export HOME=/opt/home
+#export TMPDIR=/opt/tmp
 
 # Mosquitto
 opkg install mosquitto-nossl
@@ -82,12 +85,28 @@ EOF
 
 # Python
 opkg install python3 python3-pip
+#python3 -m pip install --upgrade pip setuptools
 export HOME=/opt/home
 export TMPDIR=/opt/tmp
-#python3 -m pip install --upgrade pip setuptools
 
 # Home Assistant: https://post.smzdm.com/p/apzkg5kw/
 opkg install gcc python3-dev
+cd /opt
 wget -qO- http://bin.entware.net/mipselsf-k3.4/include/include.tar.gz | tar xvz -C /opt/include
-pip install homeasssistant
+
+wget ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz # 下载包
+tar -zxvf libffi-3.2.1.tar.gz
+cd libffi-3.2.1
+./configure
+#make # Ignore
+mv mipsel-unknown-linux-gnu/include/ffi.h /opt/include/
+mv src/mips/ffitarget.h /opt/include/
+cd /opt/lib
+ln -s libffi.so.8 libffi.so
+cd /opt
+rm -rf libffi-3.2.1*
+
+pip3 install homeassistant -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest
 

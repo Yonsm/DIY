@@ -30,11 +30,6 @@ PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:
 . /opt/etc/init.d/rc.func
 EOF
 
-
-# Misc
-opkg install iperf3
-cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest
-
 # Mosquitto
 opkg install mosquitto-nossl
 cat << \EOF > /opt/etc/mosquitto/mosquitto.conf
@@ -54,7 +49,8 @@ opkg gcc python3-dev
 #opkg install coreutils-install
 
 cd  /opt
-wget -qO- http://pkg.entware.net/binaries/armv7/include/include.tar.gz | tar xvz -C /opt/include
+#wget -qO- http://pkg.entware.net/binaries/armv7/include/include.tar.gz | tar xvz -C /opt/include
+wget -qO- http://bin.entware.net/armv7sf-k3.2/include/include.tar.gz | tar xvz -C /opt/include
 #wget ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
 # tar -zxvf libffi-3.2.1.tar.gz
 # cd libffi-3.2.1
@@ -68,3 +64,7 @@ d /opt/lib
 ln -s libffi.so.8 libffi.so
 
 pip3 install homeassistant
+
+# Misc
+opkg install iperf3
+cd /opt/bin; wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py; chmod +x speedtest; ./speedtest

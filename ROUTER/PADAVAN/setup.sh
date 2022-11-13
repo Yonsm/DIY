@@ -67,10 +67,7 @@ mount -t ext4 /dev/sdb1 /opt
 wget -O - http://bin.entware.net/mipselsf-k3.4/installer/generic.sh | /bin/sh
 
 # TODO: Entware Startup
-#mount -o bind /media/opt /opt
-umount /dev/sdb1
-mount -t ext4 /dev/sdb1 /opt
-sleep 1
+mount -o bind /media/opt/opt /opt
 /opt/etc/init.d/rc.unslung start
 #export HOME=/opt/home
 #export TMPDIR=/opt/tmp

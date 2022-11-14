@@ -1,6 +1,7 @@
 #!/bin/sh
 
-[ $# != 2 ] && echo "Usage: $0 [HOST] [URL] " && exit
+[ "$1" == "-h" ] && echo "Usage: $0 [HOST] [URL] " && exit
+if [ -z $1 ]; then HOST=192.168.31.1; else HOST=$1; fi
 
 cd `dirname $0`
 
@@ -10,7 +11,7 @@ echo "ssh root@$1 'ln -s /data/auto_ssh/authorized_keys /etc/dropbear/'"
 echo "scp auto_ssh.sh root@$1:/data/auto_ssh/"
 echo
 echo "Execute command as below:"
-echo "ssh root@$1 'mkdir /data/wing'"
+echo "ssh root@$HOST 'mkdir /data/wing'"
 for FILE in `ls|tr " " "?"`
 do
 	FILE=`echo $FILE|tr "?" " "`

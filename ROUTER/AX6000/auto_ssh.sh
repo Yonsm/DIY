@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ln -s /data/auto_ssh/authorized_keys /etc/dropbear/
+ln -s /data/authorized_keys /etc/dropbear/
 
 ln -sf /data/auto_ssh/cert.crt /etc/nginx/
 ln -sf /data/auto_ssh/cert.key /etc/nginx/

@@ -1,4 +1,5 @@
 #!/bin/sh
+# WING_URL=
 # _PROT=socks5
 # _USER=
 # _PASS=
@@ -9,7 +10,7 @@
 # _HASH=
 
 if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
-	CDIR=/data/wing # What's the FUCK?
+	CDIR=/data/wing
 	_MODE=ROUTER
 	_OS=MIWIFI
 	_GFWLIST_CONF=$CDIR/gfwlist.conf
@@ -262,10 +263,16 @@ if [ $_MODE = ROUTER ]; then
 	# ipset for DNS & Telegram
 	ipset create gfwlist iphash
 	ipset add gfwlist 8.8.8.8
-	ipset add gfwlist 91.108.56.0/22
-	ipset add gfwlist 91.108.4.0/22
-	ipset add gfwlist 109.239.140.0/24
-	ipset add gfwlist 149.154.160.0/20
+
+	ipset add gfwlist 91.108.56.110
+	ipset add gfwlist 140.82.114.26
+	ipset add gfwlist 149.154.165.96
+	ipset add gfwlist 149.154.167.151
+
+	#ipset add gfwlist 91.108.56.0/22
+	#ipset add gfwlist 91.108.4.0/22
+	#ipset add gfwlist 109.239.140.0/24
+	#ipset add gfwlist 149.154.160.0/20
 
 if [ $_OS = PADAVAN ]; then
 	# dnsmasq
@@ -386,6 +393,7 @@ stop()
 	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
 
 if [ $_MODE = ROUTER ]; then
+	ipset flush gfwlist
 	ipset destroy gfwlist
 	[ "$1" == "-R" ] && return
 

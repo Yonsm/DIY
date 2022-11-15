@@ -10,12 +10,11 @@
 # _HASH=
 
 if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
-	CDIR=/data/wing
 	_MODE=ROUTER
 	_OS=MIWIFI
-	_GFWLIST_CONF=$CDIR/gfwlist.conf
+	_GFWLIST_CONF=/data/wing/gfwlist.conf
 	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/dnsmasq_gfwlist_ipset.conf
-	PATH=$PATH:$CDIR
+	PATH=/data/wing:$PATH
 elif [ -d /etc/storage ]; then # Yonsm's dnsmasq with gfwlist and tcpdns
 	_MODE=ROUTER
 	_OS=PADAVAN
@@ -24,23 +23,20 @@ elif [ -d /etc/storage ]; then # Yonsm's dnsmasq with gfwlist and tcpdns
 	_GFWLIST_CONF_RO=/etc_ro/gfwlist.txt
 	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/gfwlist_domain.txt
 else
-	CDIR=$(cd "${0%/*}"; pwd)
 	_MODE=OTHER
 	if type networksetup >/dev/null 2>&1; then
 		_OS=MACOS
+		_GFWLIST_CONF=/Library/WebServer/Documents/gfwlist.pac
+		_GFWLIST_URL=https://raw.githubusercontent.com/petronny/gfwlist2pac/master/gfwlist.pac
 	else
 		_OS=OTHER
 	fi
-	_GFWLIST_CONF=$CDIR/gfwlist.pac
-	_GFWLIST_URL=https://raw.githubusercontent.com/petronny/gfwlist2pac/master/gfwlist.pac
+	
 fi
-
-# date >> /var/log/wing.log
-# echo "MODE=$_MODE OS=$_OS CONF=$_GFWLIST_CONF" >> /var/log/wing.log
 
 usage()
 {
-	echo "Usage: $0 <[start]|restart|stop|pause|resume|status|update|help>"
+	echo "Usage: $0 <[start]|stop|restart|pause|resume|update|install|status|-s 2/t/s/y/*|-h>"
 	echo
 	echo "$0 [-v[0-5]] <URL>"
 	echo
@@ -177,11 +173,12 @@ decode_b64()
 prepare()
 {
 	if [ ! -f $_GFWLIST_CONF ]; then
-		if [ -f "$_GFWLIST_CONF_RO" ]; then
+		if [ ! -z $_GFWLIST_CONF_RO ] && [ -f $_GFWLIST_CONF_RO ]; then
 			_GFWLIST_CONF=$_GFWLIST_CONF_RO
 		else
 			update
 		fi
+		[ $_OS = MACOS ] && [ "$WING_PAC" = "1" ] && sudo apachectl restart
 	fi
 }
 
@@ -210,10 +207,6 @@ elif [ $_OS = MACOS ]; then
 	fi
 
 	if [ "$WING_PAC" = "1" ]; then
-		if [ ! -f /Library/WebServer/Documents/gfwlist.pac ]; then
-			sudo cp $_GFWLIST_CONF /Library/WebServer/Documents/gfwlist.pac
-			sudo apachectl restart
-		fi
 		local SET_PROXY_STATE=-setautoproxystate
 		local SET_PROXY_PARAM="setautoproxyurl $WING_NETWORK http://127.0.0.1/gfwlist.pac"
 	else
@@ -427,43 +420,45 @@ case "$1" in
 start)
 	start 5 "$2"
 	;;
--t|t|stop)
+stop)
 	stop
 	;;
--R|R|restart)
+restart)
 	stop -R
 	sleep 1
 	start 1 "$2"
 	;;
--p|p|pause)
+pause)
 	inject -D
 	;;
--r|r|resume)
+resume)
 if [ $_MODE = ROUTER ]; then
 	ipset test gfwlist 8.8.8.8 || exit 3
 fi
 	inject -C || inject -A
 	;;
--s|s|status)
-	status "$2"
-	;;
--u|u|update)
+update)
 	update "$2"
 	;;
--i|i|install)
+install)
 if [ $_OS = MIWIFI ]; then
 	uci set firewall.wing=include
 	uci set firewall.wing.type="script"
-	uci set firewall.wing.path="$CDIR/wing start $2"
+	uci set firewall.wing.path="/data/wing/wing start $2"
 	uci set firewall.wing.enabled="1"
 	uci commit firewall
 	uci show firewall.wing
+elif [ $_OS = MACOS ]; then
+
 fi
 	;;
--h|h|help)
+-s|status)
+	status "$2"
+	;;
+-h)
 	usage
 	;;
--v|v)
+-v)
 	start 0 "$2"
 	;;
 -v0|-v1|-v2|-v3|-v4|-v5)

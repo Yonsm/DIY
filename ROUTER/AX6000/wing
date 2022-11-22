@@ -68,7 +68,7 @@ ipset=/pythonhosted.org/gfwlist
 server=/openwrt.org>/127.0.0.1#5353
 ipset=/openwrt.org/gfwlist
 server=/facebook-hardware.com/127.0.0.1#5353
-ipset=/facebook-hardware.com/gfwlistx
+ipset=/facebook-hardware.com/gfwlist
 server=/fbthirdpartypixel.com/127.0.0.1#5353
 ipset=/fbthirdpartypixel.com/gfwlist
 server=/workplace.com/127.0.0.1#5353
@@ -449,7 +449,7 @@ if [ $_OS = MIWIFI ]; then
 	uci commit firewall
 	uci show firewall.wing
 elif [ $_OS = MACOS ]; then
-
+	echo TODO
 fi
 	;;
 -s|status)

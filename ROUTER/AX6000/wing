@@ -15,6 +15,7 @@ if [ -f /etc/config/miwifi ]; then # Normal dnsmasq
 	_GFWLIST_CONF=/data/wing/gfwlist.conf
 	_GFWLIST_URL=https://cokebar.github.io/gfwlist2dnsmasq/dnsmasq_gfwlist_ipset.conf
 	PATH=/data/wing:$PATH
+	export LD_LIBRARY_PATH=/data/wing
 elif [ -d /etc/storage ]; then # Yonsm's dnsmasq with gfwlist and tcpdns
 	_MODE=ROUTER
 	_OS=PADAVAN
@@ -247,10 +248,7 @@ if [ $_MODE = ROUTER ]; then
 		else
 			$IPT2SOCKS_CMD -v &
 		fi
-		WING_NAT=0
 		;;
-	*)
-		WING_NAT=1
 	esac
 
 	# ipset for DNS & Telegram
@@ -286,17 +284,37 @@ fi
 	inject -A $3 $4
 }
 
-sscmd()
+resolve()
 {
-	if [ "$WING_NAT" = "1" ]; then
+	while :
+	do
+		_IP=`nslookup $_HOST | awk -F": " '/^Address/ {if (NR>4){print $2;exit 1}}' | cut -d' ' -f 1`
+		if [ ! -z $_IP ]; then
+			echo Resolved $_HOST=$_IP
+			break
+		fi
+		echo Resolving $_HOST
+		sleep 3
+	done
+}
+
+ssxcmd()
+{
+	resolve
+	if [ $RUN_MODE = ROUTER-redir ]; then
 		local RUN_TYPE=redir
 		local LOCAL_PORT=1088
 	else
 		local RUN_TYPE=local
 		local LOCAL_PORT=1080
+		if type ssr-client >/dev/null 2>&1; then
+			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_IP\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
+			XCMD="ssr-client -c /tmp/ssr.conf"
+			return
+		fi
 	fi
 	[ $1 -le 3 ] && RUN_TYPE="$RUN_TYPE -v"
-	XCMD="$2-$RUN_TYPE -s $_HOST -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
+	XCMD="$2-$RUN_TYPE -s $_IP -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
 }
 
 start()
@@ -308,24 +326,21 @@ start()
 		parse_url $WING_URL
 	fi
 
-	if [ $_PROT = socks5 ]; then
-		[ -z $_PORT ] && _PORT=1080
-		proxy $1 $_PROT $_HOST $_PORT
-	else
-		[ -z $_PORT ] && _PORT=443
-		proxy $1 $_PROT 127.0.0.1 1080
-	fi
+	case "$_PROT" in
+		*socks5) RUN_MODE=local;;
+		*) RUN_MODE=$_MODE-redir;;
+	esac
 
 	case "$_PROT" in
 	trojan*)
-		if [ "$WING_NAT" = "1" ]; then
+		if [ $RUN_MODE = ROUTER-redir ]; then
 			local RUN_TYPE=nat
 			local LOCAL_PORT=1088
 		else
-			_PROT=trojan-socks5
 			local RUN_TYPE=client
 			local LOCAL_PORT=1080
 		fi
+		resolve
 		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"$_USER\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
 		XCMD="trojan -c /tmp/trojan.conf"
 		;;
@@ -342,12 +357,7 @@ start()
 			_protoparam=`decode_b64 $_protoparam`
 			_ARGS="protoparam=$_protoparam&obfsparam=$_obfsparam"
 		fi
-		if type ssr-client >/dev/null 2>&1; then
-			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
-			XCMD="ssr-client -c /tmp/ssr.conf"
-		else
-			sscmd $1 ssr "-O $_PATH -G $_protoparam -o $_HASH -g $_obfsparam"
-		fi
+		ssxcmd $1 ssr "-O $_PATH -G $_protoparam -o $_HASH -g $_obfsparam"
 		;;
 	ss*)
 		if [ -z $_USER ]; then
@@ -355,13 +365,21 @@ start()
 		elif [ -z $_PASS ]; then
 			split_str _USER _PASS : `decode_b64 $_USER`
 		fi
-		sscmd $1 ss
+		ssxcmd $1 ss
+		;;
+	socks5)
+		[ -z $_PORT ] && _PORT=1080
+		proxy $1 $_PROT $_HOST $_PORT
+		return
 		;;
 	*)
-		[ $_PROT != socks5 ] && usage
+		usage
 		return
 		;;
 	esac
+
+	[ -z $_PORT ] && _PORT=443
+	proxy $1 $_PROT 127.0.0.1 1080
 
 	if [ $1 -ge 5 ]; then
 		$XCMD &

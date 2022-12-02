@@ -35,6 +35,14 @@ else
 	
 fi
 
+log()
+{
+	case "$1" in
+		0|1) echo "$2";;
+		2|3) echo "$2" >> /tmp/wing.log;;
+	esac
+}
+
 usage()
 {
 	echo "Usage: $0 <[start]|stop|restart|pause|resume|update|install|status|-s 2/t/s/y/*|-h>"
@@ -239,7 +247,7 @@ if [ $_MODE = ROUTER ]; then
 	case "$2" in
 	*socks5)
 		local IPT2SOCKS_CMD="ipt2socks -s $3 -p $4 -b 0.0.0.0 -l 1088 -T -4 -R -j `cat /proc/cpuinfo|grep processor|wc -l`"
-		if [ $1 -ge 5 ]; then
+		if [ $1 -ge 4 ]; then
 			$IPT2SOCKS_CMD &
 		elif [ $1 -ge 2 ]; then
 			nohup $IPT2SOCKS_CMD &> /tmp/ipt2socks.log &
@@ -286,21 +294,27 @@ fi
 
 resolve()
 {
-	while :
+	CNT=0
+	while [ $CNT -le 20 ]
 	do
-		_IP=`nslookup $_HOST | awk -F": " '/^Address/ {if (NR>4){print $2;exit 1}}' | cut -d' ' -f 1`
-		if [ ! -z $_IP ]; then
-			echo Resolved $_HOST=$_IP
-			break
-		fi
-		echo Resolving $_HOST
+		local IP=`nslookup $_HOST | awk -F": " '/^Address/ {if (NR>4){print $2;exit 1}}' | cut -d' ' -f 1`
+		log $1 "Resolve $_HOST=>$IP"
+		case "$IP" in
+		192.168.*|127.0.*|"")
+			;;
+		*)
+			_HOST=$IP
+			return
+			;;
+		esac
 		sleep 3
+		let CNT++
 	done
 }
 
 ssxcmd()
 {
-	resolve
+	resolve $1
 	if [ $RUN_MODE = ROUTER-redir ]; then
 		local RUN_TYPE=redir
 		local LOCAL_PORT=1088
@@ -308,13 +322,13 @@ ssxcmd()
 		local RUN_TYPE=local
 		local LOCAL_PORT=1080
 		if type ssr-client >/dev/null 2>&1; then
-			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_IP\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
+			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
 			XCMD="ssr-client -c /tmp/ssr.conf"
 			return
 		fi
 	fi
 	[ $1 -le 3 ] && RUN_TYPE="$RUN_TYPE -v"
-	XCMD="$2-$RUN_TYPE -s $_IP -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
+	XCMD="$2-$RUN_TYPE -s $_HOST -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
 }
 
 start()
@@ -340,7 +354,7 @@ start()
 			local RUN_TYPE=client
 			local LOCAL_PORT=1080
 		fi
-		resolve
+		resolve $1
 		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"$_USER\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
 		XCMD="trojan -c /tmp/trojan.conf"
 		;;
@@ -381,14 +395,14 @@ start()
 	[ -z $_PORT ] && _PORT=443
 	proxy $1 $_PROT 127.0.0.1 1080
 
-	if [ $1 -ge 5 ]; then
+	if [ $1 -ge 4 ]; then
 		$XCMD &
 	elif [ $1 -ge 2 ]; then
 		nohup "$XCMD" &> /tmp/wing.log &
 	elif [ $_MODE = ROUTER ]; then
 		$XCMD &
 	else
-		echo "export WING_URL=`make_url`"
+		echo "export WING_URL=\"`make_url`\""
 		echo
 		$XCMD
 		stop
@@ -398,7 +412,6 @@ start()
 stop()
 {
 	inject -D 2> /dev/null
-
 
 	killall trojan ssr-local ssr-redir ss-local ss-redir ipt2socks dns-forwarder 2> /dev/null
 	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
@@ -457,18 +470,6 @@ fi
 	;;
 update)
 	update "$2"
-	;;
-install)
-if [ $_OS = MIWIFI ]; then
-	uci set firewall.wing=include
-	uci set firewall.wing.type="script"
-	uci set firewall.wing.path="/data/wing/wing start $2"
-	uci set firewall.wing.enabled="1"
-	uci commit firewall
-	uci show firewall.wing
-elif [ $_OS = MACOS ]; then
-	echo TODO
-fi
 	;;
 -s|status)
 	status "$2"

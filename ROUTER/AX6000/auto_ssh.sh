@@ -1,31 +1,29 @@
 #!/bin/sh
 
-ln -s /data/authorized_keys /etc/dropbear/
-
-ln -sf /data/auto_ssh/cert.crt /etc/nginx/
-ln -sf /data/auto_ssh/cert.key /etc/nginx/
+# Enable HTTPS on Internet
+[ -f /data/auto_ssh/cert.crt ] && ln -sf /data/auto_ssh/cert.crt /etc/nginx/
+[ -f /data/auto_ssh/cert.key ] && ln -sf /data/auto_ssh/cert.key /etc/nginx/
 sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 #sed -i 's/www.router.miwifi.com/router.gq/' /etc/nginx/conf.d/443.conf
 sed -i 's/443/81/' /etc/nginx/conf.d/443.conf
 /etc/init.d/nginx restart
 
 #
+[ -f /data/auto_ssh/authorized_keys ] && ln -sf /data/auto_ssh/authorized_keys /etc/dropbear/
+
+# Restore host key
 host_key=/etc/dropbear/dropbear_rsa_host_key
 host_key_bk=/data/auto_ssh/dropbear_rsa_host_key
+[ -f $host_key_bk ] && ln -sf $host_key_bk $host_key
 
-# 如果存在备份的SSH密钥，将备份的密钥链接到dropbear使用的密钥
-if [ -f $host_key_bk ]; then
-    ln -sf $host_key_bk $host_key
-fi
-
-# 当前固件为稳定版时，需要执行下面命令开启SSH
+# Enable SSH
 channel=`/sbin/uci get /usr/share/xiaoqiang/xiaoqiang_version.version.CHANNEL`
 if [ "$channel" = "release" ]; then
     sed -i 's/channel=.*/channel="debug"/g' /etc/init.d/dropbear
     /etc/init.d/dropbear restart
 fi
 
-# 备份SSH密钥
+# Backup host key
 if [ ! -s $host_key_bk ]; then
     i=0
     while [ $i -le 30 ]
@@ -38,3 +36,6 @@ if [ ! -s $host_key_bk ]; then
         sleep 1s
     done
 fi
+
+# Run wing
+/data/wing/wing start &

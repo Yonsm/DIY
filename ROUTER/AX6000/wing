@@ -471,6 +471,18 @@ fi
 update)
 	update "$2"
 	;;
+install)
+if [ $_OS = MIWIFI ]; then
+	uci set firewall.wing=include
+	uci set firewall.wing.type="script"
+	uci set firewall.wing.path="/data/wing/wing start $2"
+	uci set firewall.wing.enabled="1"
+	uci commit firewall
+	uci show firewall.wing
+elif [ $_OS = MACOS ]; then
+	echo TODO
+fi
+	;;
 -s|status)
 	status "$2"
 	;;

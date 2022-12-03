@@ -410,7 +410,7 @@ stop()
 {
 	inject -D 2> /dev/null
 
-	killall trojan ssr-local ssr-redir ss-local ss-redir ipt2socks dns-forwarder 2> /dev/null
+	killall trojan ssr-local ssr-redir ss-local ss-redir ssr-client ipt2socks dns-forwarder 2> /dev/null
 	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
 
 	if [ $_MODE = ROUTER ]; then
@@ -429,6 +429,20 @@ stop()
 	fi
 
 	echo Wing service stopped
+}
+
+install()
+{
+	if [ $_OS = MIWIFI ]; then
+		uci set firewall.wing=include
+		uci set firewall.wing.type="script"
+		uci set firewall.wing.path="/data/wing/wing $2"
+		uci set firewall.wing.enabled="1"
+		uci commit firewall
+		uci show firewall.wing
+	elif [ $_OS = MACOS ]; then
+		echo TODO
+	fi
 }
 
 status()
@@ -452,7 +466,7 @@ stop)
 restart)
 	stop -R
 	sleep 1
-	start 1 "$2"
+	start 5 "$2"
 	;;
 pause)
 	inject -D
@@ -467,16 +481,7 @@ update)
 	update "$2"
 	;;
 install)
-	if [ $_OS = MIWIFI ]; then
-		uci set firewall.wing=include
-		uci set firewall.wing.type="script"
-		uci set firewall.wing.path="/data/wing/wing start $2"
-		uci set firewall.wing.enabled="1"
-		uci commit firewall
-		uci show firewall.wing
-	elif [ $_OS = MACOS ]; then
-		echo TODO
-	fi
+	install "$2"
 	;;
 -s|status)
 	status "$2"
@@ -491,6 +496,6 @@ install)
 	start ${1:2} "$2"
 	;;
 *)
-	start 1 "$1"
+	$0 start "$1" &
 	;;
 esac

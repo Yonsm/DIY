@@ -59,8 +59,8 @@ update()
 	[ ! -z "$1" ] && _GFWLIST_CONF="$1"
 	curl -k -o $_GFWLIST_CONF $_GFWLIST_URL || exit 1
 
-if [ $_OS = PADAVAN ]; then
-	cat << EOF >> $_GFWLIST_CONF
+	if [ $_OS = PADAVAN ]; then
+		cat << EOF >> $_GFWLIST_CONF
 pypi.org
 pythonhosted.org
 openwrt.org
@@ -68,8 +68,8 @@ facebook-hardware.com
 fbthirdpartypixel.com
 workplace.com
 EOF
-elif [ $_OS = MIWIFI ]; then
-	cat << EOF >> $_GFWLIST_CONF
+	elif [ $_OS = MIWIFI ]; then
+		cat << EOF >> $_GFWLIST_CONF
 server=/pypi.org/127.0.0.1#5353
 ipset=/pypi.org/gfwlist
 server=/pythonhosted.org/127.0.0.1#5353
@@ -83,7 +83,7 @@ ipset=/fbthirdpartypixel.com/gfwlist
 server=/workplace.com/127.0.0.1#5353
 ipset=/workplace.com/gfwlist
 EOF
-fi
+	fi
 }
 
 split_str()
@@ -193,101 +193,98 @@ prepare()
 
 inject()
 {
-if [ $_MODE = ROUTER ]; then
-	iptables -t nat $1 OUTPUT -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
-	iptables -t nat $1 PREROUTING -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
-elif [ $_OS = MACOS ]; then
-	if [ -z "$WING_NETWORK" ]; then
-		local SDEV=`route get example.com 2> /dev/null | grep interface`
-		local SDEV=${SDEV:13}
-		local IFS_BAK=$IFS
-		IFS=$'\n'
-		for LINE in `networksetup -listnetworkserviceorder`; do
-			echo $LINE | grep $SDEV > /dev/null 2>&1
-			if [ $? = 0 ]; then
-				WING_NETWORK=${LAST_LINE:4}
-				break
-			fi
-			LAST_LINE=$LINE
-		done
-		IFS=$IFS_BAK
+	if [ $_MODE = ROUTER ]; then
+		iptables -t nat $1 OUTPUT -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
+		iptables -t nat $1 PREROUTING -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1088
+	elif [ $_OS = MACOS ]; then
+		if [ -z "$WING_NETWORK" ]; then
+			local SDEV=`route get example.com 2> /dev/null | grep interface`
+			local SDEV=${SDEV:13}
+			local IFS_BAK=$IFS
+			IFS=$'\n'
+			for LINE in `networksetup -listnetworkserviceorder`; do
+				echo $LINE | grep $SDEV > /dev/null 2>&1
+				if [ $? = 0 ]; then
+					WING_NETWORK=${LAST_LINE:4}
+					break
+				fi
+				LAST_LINE=$LINE
+			done
+			IFS=$IFS_BAK
 
-		[ -z "$WING_NETWORK" ] && echo "Could not find valid network" && exit 2
-	fi
+			[ -z "$WING_NETWORK" ] && echo "Could not find valid network" && exit 2
+		fi
 
-	if [ "$WING_PAC" = "1" ]; then
-		local SET_PROXY_STATE=-setautoproxystate
-		local SET_PROXY_PARAM="setautoproxyurl $WING_NETWORK http://127.0.0.1/gfwlist.pac"
-	else
-		local SET_PROXY_STATE=-setsocksfirewallproxystate
-		local SET_PROXY_PARAM="setsocksfirewallproxy $WING_NETWORK $2 $3"
-	fi
+		if [ "$WING_PAC" = "1" ]; then
+			local SET_PROXY_STATE=-setautoproxystate
+			local SET_PROXY_PARAM="setautoproxyurl $WING_NETWORK http://127.0.0.1/gfwlist.pac"
+		else
+			local SET_PROXY_STATE=-setsocksfirewallproxystate
+			local SET_PROXY_PARAM="setsocksfirewallproxy $WING_NETWORK $2 $3"
+		fi
 
-	if [ $1 == -C ]; then
-		networksetup $SET_PROXY_STATE $WING_NETWORK on
-		return 0
-	elif [ $1 == -D ]; then
-		networksetup $SET_PROXY_STATE $WING_NETWORK off
-	else
-		echo "Local Network: $WING_NETWORK"
-		echo "export ALL_PROXY=socks5://$2:$3"
-		networksetup $SET_PROXY_PARAM
+		if [ $1 == -C ]; then
+			networksetup $SET_PROXY_STATE $WING_NETWORK on
+			return 0
+		elif [ $1 == -D ]; then
+			networksetup $SET_PROXY_STATE $WING_NETWORK off
+		else
+			echo "Local Network: $WING_NETWORK"
+			echo "export ALL_PROXY=socks5://$2:$3"
+			networksetup $SET_PROXY_PARAM
+		fi
 	fi
-fi
 }
 
 proxy()
 {
 	prepare
 
-if [ $_MODE = ROUTER ]; then
-	ulimit -n 65536
+	if [ $_MODE = ROUTER ]; then
+		ulimit -n 65536
 
-	# ipt2socks
-	case "$2" in
-	*socks5)
-		local IPT2SOCKS_CMD="ipt2socks -s $3 -p $4 -b 0.0.0.0 -l 1088 -T -4 -R -j `cat /proc/cpuinfo|grep processor|wc -l`"
-		if [ $1 -ge 4 ]; then
-			$IPT2SOCKS_CMD &
-		elif [ $1 -ge 2 ]; then
-			nohup $IPT2SOCKS_CMD &> /tmp/ipt2socks.log &
-		elif [ $2 != socks5 ]; then
-			nohup $IPT2SOCKS_CMD -v &> /tmp/ipt2socks.log &
+		# ipt2socks
+		case "$2" in
+		*socks5)
+			local IPT2SOCKS_CMD="ipt2socks -s $3 -p $4 -b 0.0.0.0 -l 1088 -T -4 -R -j `cat /proc/cpuinfo|grep processor|wc -l`"
+			if [ $1 -ge 4 ]; then
+				$IPT2SOCKS_CMD &
+			elif [ $1 -ge 2 ]; then
+				nohup $IPT2SOCKS_CMD &> /tmp/ipt2socks.log &
+			elif [ $2 != socks5 ]; then
+				nohup $IPT2SOCKS_CMD -v &> /tmp/ipt2socks.log &
+			else
+				$IPT2SOCKS_CMD -v &
+			fi
+			;;
+		esac
+
+		# ipset for DNS & Telegram
+		ipset create gfwlist iphash
+		ipset add gfwlist 8.8.8.8
+		ipset add gfwlist 91.108.56.110
+		ipset add gfwlist 140.82.114.26
+		ipset add gfwlist 149.154.165.96
+		ipset add gfwlist 149.154.167.151
+		#ipset add gfwlist 91.108.56.0/22
+		#ipset add gfwlist 91.108.4.0/22
+		#ipset add gfwlist 109.239.140.0/24
+		#ipset add gfwlist 149.154.160.0/20
+
+		# dnsmasq
+		if [ $_OS = PADAVAN ]; then
+			GFWLIST_LINE="gfwlist=$_GFWLIST_CONF"
+			if ! grep "$GFWLIST_LINE" $_DNSMASQ_CONF > /dev/null; then
+				killall dnsmasq
+				echo "$GFWLIST_LINE" >> $_DNSMASQ_CONF
+				dnsmasq
+			fi
 		else
-			$IPT2SOCKS_CMD -v &
+			dns-forwarder -p 5353 &
+			ln -s $_GFWLIST_CONF /tmp/dnsmasq.d/
+			/etc/init.d/dnsmasq restart
 		fi
-		;;
-	esac
-
-	# ipset for DNS & Telegram
-	ipset create gfwlist iphash
-	ipset add gfwlist 8.8.8.8
-
-	ipset add gfwlist 91.108.56.110
-	ipset add gfwlist 140.82.114.26
-	ipset add gfwlist 149.154.165.96
-	ipset add gfwlist 149.154.167.151
-
-	#ipset add gfwlist 91.108.56.0/22
-	#ipset add gfwlist 91.108.4.0/22
-	#ipset add gfwlist 109.239.140.0/24
-	#ipset add gfwlist 149.154.160.0/20
-
-if [ $_OS = PADAVAN ]; then
-	# dnsmasq
-	GFWLIST_LINE="gfwlist=$_GFWLIST_CONF"
-	if ! grep "$GFWLIST_LINE" $_DNSMASQ_CONF > /dev/null; then
-		killall dnsmasq
-		echo "$GFWLIST_LINE" >> $_DNSMASQ_CONF
-		dnsmasq
 	fi
-else
-	dns-forwarder -p 5353 &
-	ln -s $_GFWLIST_CONF /tmp/dnsmasq.d/
-	/etc/init.d/dnsmasq restart
-fi
-
-fi
 
 	inject -A $3 $4
 }
@@ -416,22 +413,20 @@ stop()
 	killall trojan ssr-local ssr-redir ss-local ss-redir ipt2socks dns-forwarder 2> /dev/null
 	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
 
-if [ $_MODE = ROUTER ]; then
-	ipset flush gfwlist
-	ipset destroy gfwlist
-	[ "$1" == "-R" ] && return
-
-if [ $_OS = PADAVAN ]; then
-	prepare
-	sed -i /gfwlist=${_GFWLIST_CONF//\//\\/}/d $_DNSMASQ_CONF
-	killall dnsmasq
-	dnsmasq
-else
-	rm /tmp/dnsmasq.d/gfwlist.conf
-	/etc/init.d/dnsmasq restart
-fi
-
-fi
+	if [ $_MODE = ROUTER ]; then
+		ipset flush gfwlist
+		ipset destroy gfwlist
+		[ "$1" == "-R" ] && return
+		if [ $_OS = PADAVAN ]; then
+			prepare
+			sed -i /gfwlist=${_GFWLIST_CONF//\//\\/}/d $_DNSMASQ_CONF
+			killall dnsmasq
+			dnsmasq
+		else
+			rm /tmp/dnsmasq.d/gfwlist.conf
+			/etc/init.d/dnsmasq restart
+		fi
+	fi
 
 	echo Wing service stopped
 }
@@ -463,25 +458,25 @@ pause)
 	inject -D
 	;;
 resume)
-if [ $_MODE = ROUTER ]; then
-	ipset test gfwlist 8.8.8.8 || exit 3
-fi
+	if [ $_MODE = ROUTER ]; then
+		ipset test gfwlist 8.8.8.8 || exit 3
+	fi
 	inject -C || inject -A
 	;;
 update)
 	update "$2"
 	;;
 install)
-if [ $_OS = MIWIFI ]; then
-	uci set firewall.wing=include
-	uci set firewall.wing.type="script"
-	uci set firewall.wing.path="/data/wing/wing start $2"
-	uci set firewall.wing.enabled="1"
-	uci commit firewall
-	uci show firewall.wing
-elif [ $_OS = MACOS ]; then
-	echo TODO
-fi
+	if [ $_OS = MIWIFI ]; then
+		uci set firewall.wing=include
+		uci set firewall.wing.type="script"
+		uci set firewall.wing.path="/data/wing/wing start $2"
+		uci set firewall.wing.enabled="1"
+		uci commit firewall
+		uci show firewall.wing
+	elif [ $_OS = MACOS ]; then
+		echo TODO
+	fi
 	;;
 -s|status)
 	status "$2"

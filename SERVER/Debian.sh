@@ -115,14 +115,16 @@ write list = admin
 
 EOF
 
-# KODI: NOT WORKED on Debian 11!  Worked on PVE 7.5
+# KODI
 # https://blog.d2okkk.net/202104/j1800_setup_2/
-apt-get update
-#apt-get install ca-certificates curl gnupg
+# https://www.jianshu.com/p/b34cf9512677
+apt update
+#apt install ca-certificates curl gnupg
 #curl 'https://basilgello.github.io/kodi-nightly-debian-repo/repository-key.asc' | apt-key add -
-apt-get install --install-recommends kodi kodi-pvr-iptvsimple
-apt-get install software-properties-common xorg xserver-xorg-legacy alsa-utils mesa-utils git-core librtmp1 libmad0 lm-sensors libmpeg2-4 avahi-daemon libva2 vainfo i965-va-driver dbus-x11 pastebinit xserver-xorg-video-intel
-apt-get upgrade
+apt install --install-recommends kodi kodi-pvr-iptvsimple
+apt install software-properties-common xorg xserver-xorg-legacy alsa-utils mesa-utils git-core librtmp1 libmad0 lm-sensors libmpeg2-4 avahi-daemon libva2 vainfo i965-va-driver dbus-x11 pastebinit xserver-xorg-video-intel
+apt install xserver-xorg-video-fbdev # WORKED on Debian 11!  No Need Won PVE 7.5
+apt upgrade
 
 cat <<\EOF > /etc/X11/Xwrapper.config
 allowed_users=anybody
@@ -148,5 +150,5 @@ EOF
 
 systemctl daemon-reload
 systemctl enable kodi
-adduser kodi
-usermod -a -G cdrom,audio,video,plugdev,users,dialout,dip,input kodi
+#adduser kodi
+#usermod -a -G cdrom,audio,video,plugdev,users,dialout,dip,input kodi

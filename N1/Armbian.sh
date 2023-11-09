@@ -55,6 +55,14 @@ wget -O speedtest https://raw.githubusercontent.com/sivel/speedtest-cli/master/s
 apt install nginx
 ln -s /root/.homeassistant/extras/setup/nginx.conf /etc/nginx/sites-enabled/default
 
+cd /tmp
+wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz
+tar -xf ffmpeg-release-arm64-static.tar.xz
+mv ffmpeg-5.1.1-arm64-static ff* /usr/local/bin/
+rm -rf ffmpeg-5.1.1-arm64-static
+rm ffmpeg-release-arm64-static.tar.xz
+
+
 #ln -s /root/.homeassistant/extras/setup/adb /usr/local/bin/
 ln -s /root/.homeassistant/extras/setup/ffmpeg /usr/local/bin/
 ln -s /root/.homeassistant/extras/setup/trojan /usr/local/bin/

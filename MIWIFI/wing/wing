@@ -1,41 +1,42 @@
 #!/bin/sh
 # WING_URL=
-# _PROT=socks5
-# _USER=
-# _PASS=
-# _HOST=192.168.1.8
-# _PORT=
-# _PATH=
-# _ARGS=
-# _HASH=
-
-_GFW_URL=https://cokebar.github.io/gfwlist2dnsmasq/gfwlist_domain.txt
+# _PROT=socks5; _USER=; _PASS=; _HOST=192.168.1.8; _PORT=; _PATH=; _ARGS=; _HASH=
 
 if [ -f /etc/config/miwifi ]; then
 	_MODE=ROUTER
 	_OS=MIWIFI
-	_GFW_LIST=/data/wing/gfwlist.conf
+	_GFW_LIST=/data/wing
+	_DNSMASQ_CONF=/tmp/dnsmasq.d
 	PATH=/data/wing:$PATH
 	export LD_LIBRARY_PATH=/data/wing:$LD_LIBRARY_PATH
-elif [ -d /etc/openwrt_release ]; then
+elif [ -f /etc/openwrt_release ]; then
 	_MODE=ROUTER
 	_OS=OPENWRT
-	_GFW_LIST=/etc/gfwlist.conf
+	_GFW_LIST=/etc
+	#_DNSMASQ_CONF=/tmp/dnsmasq.d
+	_DNSMASQ_CONF=/etc/dnsmasq.conf
+	! grep gfwlist.txt /etc/init.d/dnsmasq > /dev/null && sed -i 's#procd_add_jail_mount /etc/passwd#procd_add_jail_mount /etc/gfwlist.txt /etc/gfwlist.conf /etc/passwd#' /etc/init.d/dnsmasq
 elif [ -d /etc/storage ]; then
 	_MODE=ROUTER
-	_OS=PADAVAN # Yonsm's dnsmasq with gfwlist and tcpdns
-	_GFW_LIST=/etc/storage/dnsmasq/gfwlist.txt
+	_OS=PADAVAN
+	_GFW_LIST=/etc/storage/dnsmasq
 	_GFW_LIST_RO=/etc_ro/gfwlist.txt
+	_DNSMASQ_CONF=/etc/storage/dnsmasq/dnsmasq.conf
 else
-	_MODE=PAC
+	_MODE=SERVICE
 	if type networksetup >/dev/null 2>&1; then
-		WING_PAC=1
+		[ -z "$WING_PAC" ] && WING_PAC=1
 		_OS=MACOS
 		_GFW_LIST=/Library/WebServer/Documents/gfwlist.pac
+		[ ! -f $_GFW_LIST ] && sudo chmod 777 /Library/WebServer/Documents
 	else
 		_OS=LINUX
 		_GFW_LIST=./gfwlist.pac
 	fi
+fi
+
+if [ $_MODE = ROUTER ]; then
+	[ ! -d $_DNSMASQ_CONF ] && dnsmasq --help | grep gfwlist >/dev/null 2>&1 && _GFW_LIST=$_GFW_LIST/gfwlist.txt || _GFW_LIST=$_GFW_LIST/gfwlist.conf
 fi
 
 log() {
@@ -44,6 +45,8 @@ log() {
 		2|3) echo "$2" >> /tmp/wing.log;;
 	esac
 }
+
+log $1 "Wing to World on $OS in $_MODE mode"
 
 usage() {
 	echo "Usage: $0 <[start]|stop|restart|pause|resume|update|install|status|-s 2/t/s/y/*|-h>"
@@ -57,35 +60,17 @@ usage() {
 
 update() {
 	[ ! -z "$1" ] && _GFW_LIST="$1"
-	_GFW_FMT=${_GFW_LIST##*.}
-	[ "$_GFW_FMT" = conf -o "$_GFW_FMT" = pac ] && _GFW_TMP=/tmp/gfwlist.txt || _GFW_TMP=$_GFW_LIST
+	_FMT=${_GFW_LIST##*.}
+	[ "$_FMT" = conf -o "$_FMT" = pac ] && _GFW_TMP=/tmp/gfwlist.txt || _GFW_TMP=$_GFW_LIST
 
-	curl -k -o $_GFW_TMP $_GFW_URL || exit 1
-	cat << \EOF >> $_GFW_TMP
-singlelogin.re
-brew.sh
-facebook-hardware.com
-fbthirdpartypixel.com
-openai.com
-openwrt.org
-pypi.org
-pythonhosted.org
-workplace.com
-zlibrary-cn.se
-EOF
-	if [ $_GFW_FMT = conf ]; then
-		sed -e 's_^_server=/_' -e 's_$_/127.0.0.1#5300_' $_GFW_TMP > $_GFW_LIST
+	curl -k -o $_GFW_TMP https://raw.githubusercontent.com/Yonsm/OponWrt/main/fix-files/package/helloworld/wing/gfwlist.txt || (echo "githubusercontent.com" > $_GFW_TMP; echo "Update gfwlist failed! You should run wing update again.")
+	if [ $_FMT = conf ]; then
+		sed -e 's_^_server=/_' -e 's_$_/127.0.0.1#5354_' $_GFW_TMP > $_GFW_LIST
 		sed -e 's_^_ipset=/_' -e 's_$_/gfwlist_' $_GFW_TMP >> $_GFW_LIST
-		# printf "server=/" > $_GFW_LIST
-		# cat $_GFW_TMP | tr '\n' '/' >> $_GFW_LIST
-		# echo "127.0.0.1#5300" >> $_GFW_LIST
-		# printf "ipset=/" >> $_GFW_LIST
-		# cat $_GFW_TMP | tr '\n' '/' >> $_GFW_LIST
-		# echo "gfwlist" >> $_GFW_LIST
-	elif [ $_GFW_FMT = pac ]; then
+	elif [ $_FMT = pac ]; then
 		echo "var s = [" > $_GFW_LIST
 		sed -e 's/^/"/' -e 's/$/",/' $_GFW_TMP >> $_GFW_LIST
-		[ -z $3 ] && _IP=127.0.0.1 || _IP=$2
+		[ -z $2 ] && _IP=127.0.0.1 || _IP=$2
 		echo "]; function FindProxyForURL(u, h) { for (var i = 0; i < s.length; i++) { var r = s[i]; if (h == r || h.endsWith('.' + r)) return 'SOCKS5 $_IP:1080; DIRECT'; } return 'DIRECT'; }" >> $_GFW_LIST
 	else
 		return
@@ -157,7 +142,9 @@ parse_url() {
 }
 
 make_url() {
-	local URL="$_PROT://$_USER:$_PASS@$_HOST:$_PORT"
+	local URL="$_PROT://$_USER"
+	[ "$_PASS" ] && URL="$URL:$_PASS"
+	URL="$URL@$_HOST:$_PORT"
 	[ ! -z $_PATH ] && URL="$URL/$_PATH"
 	[ ! -z $_ARGS ] && URL="$URL?$_ARGS"
 	[ ! -z $_HASH ] && URL="$URL#$_HASH"
@@ -215,23 +202,20 @@ inject() {
 			[ -z "$WING_NETWORK" ] && echo "Could not find valid network" && exit 2
 		fi
 
-		if [ "$WING_PAC" = "1" ]; then
-			local SET_PROXY_STATE=-setautoproxystate
-			local SET_PROXY_PARAM="setautoproxyurl $WING_NETWORK http://127.0.0.1/gfwlist.pac"
-		else
-			local SET_PROXY_STATE=-setsocksfirewallproxystate
-			local SET_PROXY_PARAM="setsocksfirewallproxy $WING_NETWORK $2 $3"
-		fi
-
 		if [ $1 == -C ]; then
-			networksetup $SET_PROXY_STATE $WING_NETWORK on
+			[ "$WING_PAC" = "1" ] && 
+				networksetup -setautoproxystate "$WING_NETWORK" on || 
+				networksetup -setsocksfirewallproxystate "$WING_NETWORK" on
 			return 0
 		elif [ $1 == -D ]; then
-			networksetup $SET_PROXY_STATE $WING_NETWORK off
+			networksetup -setautoproxystate "$WING_NETWORK" off
+			networksetup -setsocksfirewallproxystate "$WING_NETWORK" off
 		else
 			echo "Local Network: $WING_NETWORK"
 			echo "export ALL_PROXY=socks5://$2:$3"
-			networksetup $SET_PROXY_PARAM
+			[ "$WING_PAC" = "1" ] && 
+				networksetup setautoproxyurl "$WING_NETWORK" http://127.0.0.1/gfwlist.pac ||
+				networksetup setsocksfirewallproxy "$WING_NETWORK" $2 $3
 		fi
 	fi
 }
@@ -270,18 +254,25 @@ proxy() {
 		#ipset add gfwlist 109.239.140.0/24
 		#ipset add gfwlist 149.154.160.0/20
 
+		# dns2tcp
+		if type dns2tcp>/dev/null 2>&1; then
+			dns2tcp -L 0.0.0.0#5354 -R 8.8.8.8#53 &
+		else
+			dns-forwarder -p 5354 &
+		fi
+
 		# dnsmasq
-		if [ $_OS = PADAVAN ]; then
-			GFWLIST_LINE="gfwlist=$_GFW_LIST"
-			if ! grep "$GFWLIST_LINE" /etc/storage/dnsmasq/dnsmasq.conf > /dev/null; then
-				killall dnsmasq
-				echo "$GFWLIST_LINE" >> /etc/storage/dnsmasq/dnsmasq.conf
-				dnsmasq
+		if [ -d $_DNSMASQ_CONF ]; then
+			if [ ! -f $_DNSMASQ_CONF/${_GFW_LIST##*/} ]; then
+				[ $_OS = OPENWRT ] && cp $_GFW_LIST $_DNSMASQ_CONF || ln -s $_GFW_LIST $_DNSMASQ_CONF
+				/etc/init.d/dnsmasq restart
 			fi
 		else
-			dns-forwarder &
-			ln -s $_GFW_LIST /tmp/dnsmasq.d/
-			/etc/init.d/dnsmasq restart
+			[ ${_GFW_LIST##*.} = txt ] && GFWLIST_LINE="gfwlist=$_GFW_LIST" || GFWLIST_LINE="conf-file=$_GFW_LIST"
+			if ! grep "$GFWLIST_LINE" $_DNSMASQ_CONF > /dev/null; then
+				echo "$GFWLIST_LINE" >> $_DNSMASQ_CONF
+				[ $_OS = PADAVAN ] && (killall dnsmasq; dnsmasq) || /etc/init.d/dnsmasq restart
+			fi
 		fi
 	fi
 
@@ -310,6 +301,7 @@ resolve() {
 
 ssxcmd() {
 	resolve $1
+	[ -z $_PORT ] && _PORT=443
 	if [ $RUN_MODE = ROUTER-redir ]; then
 		local RUN_TYPE=redir
 		local LOCAL_PORT=1088
@@ -317,17 +309,17 @@ ssxcmd() {
 		local RUN_TYPE=local
 		local LOCAL_PORT=1080
 		if type ssr-client >/dev/null 2>&1; then
-			echo "{\"password\":\"$_PASS\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":1080}}" > /tmp/ssr.conf
+			echo "{\"password\":\"${_PASS//%/\\x}\",\"method\":\"$_USER\",\"protocol\":\"$_PATH\",\"protocol_param\":\"$_protoparam\",\"obfs\":\"$_HASH\",\"obfs_param\":\"$_obfsparam\",\"client_settings\":{\"server\":\"$_HOST\",\"server_port\":$_PORT,\"listen_address\":\"0.0.0.0\",\"listen_port\":$LOCAL_PORT}}" > /tmp/ssr.conf
 			XCMD="ssr-client -c /tmp/ssr.conf"
 			return
 		fi
 	fi
 	[ $1 -le 3 ] && RUN_TYPE="$RUN_TYPE -v"
-	XCMD="$2-$RUN_TYPE -s $_HOST -p $_PORT -k $_PASS -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
+	XCMD="$2-$RUN_TYPE -s $_HOST -p $_PORT -k ${_PASS//%/\\x} -b 0.0.0.0 -l $LOCAL_PORT -m $_USER $3"
 }
 
 start() {
-	if [ ! -z $2 ]; then
+	if [ ! -z "$2" ]; then
 		parse_url $2
 	elif [ -z $_PROT ]; then
 		[ -z $WING_URL ] && usage
@@ -349,7 +341,8 @@ start() {
 			local LOCAL_PORT=1080
 		fi
 		#resolve $1
-		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"$_USER\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
+		[ -z $_PORT ] && _PORT=443
+		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"${_USER//%/\\x}\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
 		XCMD="trojan -c /tmp/trojan.conf"
 		;;
 	ssr*)
@@ -386,17 +379,17 @@ start() {
 		;;
 	esac
 
-	[ -z $_PORT ] && _PORT=443
 	proxy $1 $_PROT 127.0.0.1 1080
 
 	if [ $1 -ge 4 ]; then
 		$XCMD &
 	elif [ $1 -ge 2 ]; then
 		nohup "$XCMD" &> /tmp/wing.log &
-	elif [ $_MODE = ROUTER ]; then
-		$XCMD &
 	else
+		echo
 		echo "export WING_URL=\"`make_url`\""
+		echo
+		echo "$XCMD"
 		echo
 		$XCMD
 		stop
@@ -406,21 +399,24 @@ start() {
 stop() {
 	inject -D 2> /dev/null
 
-	killall trojan ssr-local ssr-redir ss-local ss-redir ssr-client ipt2socks dns-forwarder 2> /dev/null
+	killall trojan ssr-local ssr-redir ss-local ss-redir ssr-client ipt2socks dns2tcp dns-forwarder 2> /dev/null
 	rm /tmp/trojan.conf /tmp/ssr.conf /tmp/wing.log /tmp/ipt2socks.log 2> /dev/null
 
 	if [ $_MODE = ROUTER ]; then
 		ipset flush gfwlist
 		ipset destroy gfwlist
 		[ "$1" == "-R" ] && return
-		if [ $_OS = PADAVAN ]; then
-			prepare
-			sed -i /gfwlist=${_GFW_LIST//\//\\/}/d /etc/storage/dnsmasq/dnsmasq.conf
-			killall dnsmasq
-			dnsmasq
+
+		prepare
+
+		if [ -d $_DNSMASQ_CONF ]; then
+			rm $_DNSMASQ_CONF/${_GFW_LIST##*/} && /etc/init.d/dnsmasq restart
 		else
-			rm /tmp/dnsmasq.d/gfwlist.conf
-			/etc/init.d/dnsmasq restart
+			[ ${_GFW_LIST##*.} = txt ] && GFWLIST_LINE="gfwlist=$_GFW_LIST" || GFWLIST_LINE="conf-file=$_GFW_LIST"
+			if grep "$GFWLIST_LINE" $_DNSMASQ_CONF > /dev/null; then
+				sed -i /${GFWLIST_LINE//\//\\/}/d $_DNSMASQ_CONF
+				[ $_OS = PADAVAN ] && (killall dnsmasq; dnsmasq) || /etc/init.d/dnsmasq restart
+			fi
 		fi
 	fi
 

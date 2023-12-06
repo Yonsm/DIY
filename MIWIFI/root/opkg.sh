@@ -21,6 +21,6 @@ alias $OPKG_CMD="opkg -d $OPKG_CMD --force-depends"
 
 # echo
 # echo "$OPKG_CMD update"
-# echo "$OPKG_CMD install iperf htop mosquitto jq sqlite3"
+# echo "$OPKG_CMD install iperf jq sqlite3-cli htop mosquitto"
 # echo "$OPKG_CMD list_installed"
 # echo

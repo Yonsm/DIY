@@ -11,6 +11,7 @@ mount --bind /data/root /root
 [ -f /etc/sysapihttpd/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/sysapihttpd/miwifi-webinitrd.conf
 [ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/
 [ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
+[ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
 [ -f /etc/init.d/nginx ] &&  /etc/init.d/nginx restart || /etc/init.d/sysapihttpd restart
 
 # SSH

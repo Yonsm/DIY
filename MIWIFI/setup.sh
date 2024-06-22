@@ -5,8 +5,9 @@ if [ -z $1 ]; then HOST=192.168.31.1; else HOST=$1; fi
 
 cd `dirname $0`
 
-echo "# SSH for RedMi AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
-echo "# SSH for XiaoMi AX7000: https://www.right.com.cn/forum/thread-8283638-1-1.html"
+echo "# RedMi AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
+echo "# XiaoMi AX7000: https://www.right.com.cn/forum/thread-8283638-1-1.html"
+echo "# XiaoMi BE6500 Pro: https://www.gaicas.com/xiaomi-be6500-pro.html"
 echo
 echo "# Root"
 echo  "ssh root@$HOST 'mkdir /data/root'"
@@ -20,6 +21,7 @@ echo  "scp -O root/root.sh root@$HOST:/data/root/"
 echo  "#scp -O root/hass.sh root@$HOST:/data/root/"
 echo  "#scp -O root/smb.conf root@$HOST:/data/root/"
 echo  "#scp -O root/alist.sh root@$HOST:/data/root/"
+echo  "#scp -O root/dnspod.sh root@$HOST:/data/root/"
 echo  "ssh root@$HOST 'uci set firewall.root=include'"
 echo  "ssh root@$HOST 'uci set firewall.root.type=script'"
 echo  "ssh root@$HOST 'uci set firewall.root.path=/data/root/root.sh'"

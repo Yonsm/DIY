@@ -5,14 +5,23 @@ if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
 
 # HTTPS
-[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81/' /etc/nginx/conf.d/443.conf && sed -i 's/www.router.miwifi.com/router.gq/' /etc/nginx/conf.d/443.conf
-[ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/81/' /etc/sysapihttpd/sysapihttpd.conf
+[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81 ssl; listen [::]:81/' /etc/nginx/conf.d/443.conf
+[ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/[::]:81/' /etc/sysapihttpd/sysapihttpd.conf
 [ -f /etc/nginx/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 [ -f /etc/sysapihttpd/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/sysapihttpd/miwifi-webinitrd.conf
 [ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/
 [ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
 [ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
 [ -f /etc/init.d/nginx ] &&  /etc/init.d/nginx restart || /etc/init.d/sysapihttpd restart
+
+ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 3580 -j ACCEPT
+#ip6tables -F
+#ip6tables -X
+#ip6tables -P INPUT ACCEPT
+#ip6tables -P OUTPUT ACCEPT
+#ip6tables -P FORWARD ACCEPT
 
 # SSH
 host_key=/etc/dropbear/dropbear_rsa_host_key

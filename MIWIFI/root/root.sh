@@ -63,5 +63,5 @@ if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
 fi
 
 # MQTT
-[ -f /data/xpkg/etc/mosquitto/mosquitto.conf ] && /data/xpkg/usr/sbin/mosquitto -d -c /data/xpkg/etc/mosquitto/mosquitto.conf
+[ -f /data/root/mosquitto.conf ] && /data/xpkg/usr/sbin/mosquitto -d -c /data/root/mosquitto.conf
 fi

@@ -14,7 +14,7 @@ alias hasslog="docklog homeassistant"
 alias mqttsub='mqttsub() { mosquitto_sub -v -t "$1#"; }; mqttsub'
 
 if [ "$1" == "install" ]; then
-docker run -d --name=homeassistant --restart=unless-stopped -e TZ=Asia/Shanghai --net=host -v $HASS_DIR:/config -p 88:88 ghcr.nju.edu.cn/home-assistant/home-assistant:stable
+docker run -d --name=homeassistant --restart=unless-stopped -e TZ=Asia/Shanghai --net=host -v $HASS_DIR:/config ghcr.nju.edu.cn/home-assistant/home-assistant:stable
 hasssh << \EOF
 	ln -s /config /root/.homeassistant
 	cat <<\EOF2 >> ~/.bashrc

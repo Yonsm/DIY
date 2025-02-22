@@ -28,6 +28,7 @@ echo  "ssh root@$HOST 'uci set firewall.root.path=/data/root/root.sh'"
 echo  "ssh root@$HOST 'uci set firewall.root.enabled=1'"
 echo  "ssh root@$HOST 'uci commit firewall'"
 
+
 echo
 echo "# Wing"
 echo  "ssh root@$HOST 'mkdir /data/wing'"
@@ -37,6 +38,10 @@ do
 	echo  "scp -O wing/$FILE root@$HOST:/data/wing/"
 done
 echo  "ssh root@$HOST '/data/wing/wing install trojan://****@****.***:443'"
+
+
+echo  "#ssh root@$HOST 'mkdir /data/other/xpkg; ln -s /data/other/xpkg /data/'"
+echo  "#ssh root@$HOST 'mkdir /data/other_vol/libexec; ln -s /data/other_vol/libexec /data/'"
 
 echo
 echo "# SFTP"

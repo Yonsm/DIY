@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# IFACE=pppoe-wan /data/root/dnspod.sh <id> <token> <domain> [record_id] [A|AAAA] &
+
 # ROOT
 if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
@@ -17,11 +19,6 @@ mount --bind /data/root /root
 ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
 ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
 ip6tables -I INPUT  -p tcp --dport 3580 -j ACCEPT
-#ip6tables -F
-#ip6tables -X
-#ip6tables -P INPUT ACCEPT
-#ip6tables -P OUTPUT ACCEPT
-#ip6tables -P FORWARD ACCEPT
 
 # SSH
 host_key=/etc/dropbear/dropbear_rsa_host_key
@@ -47,9 +44,15 @@ if [ ! -s $host_key_bk ]; then
 fi
 
 # SFTP
-if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/libexec/sftp-server ]; then
-	[ ! -f /data/libexec/login.sh ] && cp -aL /usr/libexec/* /data/libexec/
-	mount --bind /data/libexec /usr/libexec
+if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/other/libexec/sftp-server ]; then
+	[ ! -f /data/other/libexec/login.sh ] && cp -aL /usr/libexec/* /data/other/libexec/
+	mount --bind /data/other/libexec /usr/libexec
+fi
+
+# WEB /vas
+if [ ! -f /www/vas/index.html ] && [ -f /data/other/vas/index.html ]; then
+	[ ! -f /data/other/vas/vas_default.png ] && cp -aL /www/vas/* /data/other/vas/
+	mount --bind /data/other/vas /www/vas
 fi
 
 # SAMBA
@@ -63,5 +66,12 @@ if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
 fi
 
 # MQTT
-[ -f /data/xpkg/etc/mosquitto/mosquitto.conf ] && /data/xpkg/usr/sbin/mosquitto -d -c /data/xpkg/etc/mosquitto/mosquitto.conf
+[ -f /data/root/mqtt.conf ] && /data/other/xpkg/usr/sbin/mosquitto -d -c /data/root/mqtt.conf &
+
+[ -f /data/other/mihex/mihex.py ] && /data/other/mihex/mihex.py -V &
+
+# FRP
+[ -f /data/root/frpc.ini ] && /data/other/xpkg/usr/bin/frpc -c /data/root/frpc.ini &
+[ -e /data/other/xpkg/usr/bin/frps ] && /data/other/xpkg/usr/bin/frps -p 7001 -t **** --dashboard_port 7002 --dashboard_pwd **** &
+
 fi

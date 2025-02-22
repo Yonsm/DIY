@@ -12,7 +12,7 @@ dnspod() {
 		fi
 	else
 		RECORD_TYPE=A
-		if [ -n "$IPV6" ]; then
+		if [ -n "$IPV4" ]; then
 			IP=$IPV4
 		elif [ -n "$IFACE" ]; then
 			IP=`ifconfig $IFACE|grep "inet addr:"|grep -v 127.|grep -v 192.|grep -v 10.|tr ' ' :|cut -d : -f 13`
@@ -45,10 +45,14 @@ ID=$1
 TOKEN=$2
 DOMAIN=${3#*.}
 SUB_DOMAIN=${3%%.*}
-if [[ $DOMAIN != *.* ]]; then
-	DOMAIN=$3
-	SUB_DOMAIN=@
-fi
+case "$DOMAIN" in
+	*.*)
+		;;
+	*)
+		DOMAIN=$3
+		SUB_DOMAIN=@
+		;;
+esac
 
 RECORD_ID=$4
 if [ -n "$RECORD_ID" ]; then

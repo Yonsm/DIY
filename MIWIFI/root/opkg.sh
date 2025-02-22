@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z $1 ] && OPKG_DST=/data/xpkg || OPKG_DST=$1
+[ -z $1 ] && OPKG_DST=/data/other/xpkg || OPKG_DST=$1
 [ -z $2 ] && OPKG_CMD=${OPKG_DST##*/} || OPKG_CMD=$2
 
 if ! grep immortalwrt /etc/opkg/customfeeds.conf >/dev/null 2>&1; then

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>摄像头控制台</title>
+</head>
+<body>
+  <h1>摄像头控制台</h1>
+  <p>由 <a href="https://github.com/Yonsm/DIY/tree/master/CAMERA" target="_blank">Yonsm.NET</a> 倾情提供，欢迎使用。</p>
+
+  <h2>视频回放</h2>
+  <ul>
+    <li><a href="/record/">录制的视频</a></li>
+    <li><a href="/last.cgi?v=1">最近</a>的<a href="/last.cgi?v=1&r=1">视频</a></li>
+    <li><a href="/last.cgi">最近</a>的<a href="/last.cgi?r=1">快照</a></li>
+  </ul>
+
+  <h2>视频直播</h2>
+  <ul>
+    <li><a id="ch0_0" href="">视频直播</a></li>
+  </ul>
+
+  <script>
+    document.getElementById("ch0_0").href="rtsp://" + location.host + "/live/ch00_0";
+  </script>
+</body>
+</html>

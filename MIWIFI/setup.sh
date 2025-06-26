@@ -6,7 +6,7 @@ if [ -z $1 ]; then HOST=192.168.31.1; else HOST=$1; fi
 cd `dirname $0`
 
 echo "# RedMi AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
-echo "# XiaoMi AX7000: https://www.right.com.cn/forum/thread-8283638-1-1.html"
+echo "# XiaoMi AX7000: https://www.gaicas.com/xiaomi-be7000.html"
 echo "# XiaoMi BE6500 Pro: https://www.gaicas.com/xiaomi-be6500-pro.html"
 echo
 echo "# Root"
@@ -39,11 +39,7 @@ do
 done
 echo  "ssh root@$HOST '/data/wing/wing install trojan://****@****.***:443'"
 
-
-echo  "#ssh root@$HOST 'mkdir /data/other/xpkg; ln -s /data/other/xpkg /data/'"
-echo  "#ssh root@$HOST 'mkdir /data/other_vol/libexec; ln -s /data/other_vol/libexec /data/'"
-
 echo
 echo "# SFTP"
-echo  "ssh root@$HOST 'mkdir /data/libexec'"
-echo  "scp -O libexec/sftp-server root@$HOST:/data/libexec/"
+echo  "ssh root@$HOST 'mkdir -p /data/other/libexec'"
+echo  "scp -O other/libexec/sftp-server root@$HOST:/data/other/libexec/"

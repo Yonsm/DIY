@@ -1,10 +1,12 @@
 #!/bin/sh
 
-# IFACE=pppoe-wan /data/root/dnspod.sh <id> <token> <domain> [record_id] [A|AAAA] &
-
 # ROOT
 if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
+
+ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
 
 # HTTPS
 [ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81 ssl; listen [::]:81/' /etc/nginx/conf.d/443.conf
@@ -15,10 +17,6 @@ mount --bind /data/root /root
 [ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
 [ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
 [ -f /etc/init.d/nginx ] &&  /etc/init.d/nginx restart || /etc/init.d/sysapihttpd restart
-
-ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
-ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
-ip6tables -I INPUT  -p tcp --dport 3580 -j ACCEPT
 
 # SSH
 host_key=/etc/dropbear/dropbear_rsa_host_key
@@ -49,13 +47,7 @@ if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/other/libexec/sftp-server ]; 
 	mount --bind /data/other/libexec /usr/libexec
 fi
 
-# WEB /vas
-if [ ! -f /www/vas/index.html ] && [ -f /data/other/vas/index.html ]; then
-	[ ! -f /data/other/vas/vas_default.png ] && cp -aL /www/vas/* /data/other/vas/
-	mount --bind /data/other/vas /www/vas
-fi
-
-# SAMBA
+# SMB
 if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
 	[ -z $1 ] && SMBPWD=admin || SMBPWD=$1
 	! grep admin /etc/passwd && echo "admin:x:0:0:root:/root:/bin/ash" >> /etc/passwd
@@ -65,13 +57,12 @@ if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
 	/etc/init.d/samba restart
 fi
 
-# MQTT
-[ -f /data/root/mqtt.conf ] && /data/other/xpkg/usr/sbin/mosquitto -d -c /data/root/mqtt.conf &
-
+# MQTT & MiHex
+[ -f /data/other/xpkg/etc/mosquitto/mosquitto.conf ] && /data/other/xpkg/usr/sbin/mosquitto -d -c /data/other/xpkg/etc/mosquitto/mosquitto.conf &
 [ -f /data/other/mihex/mihex.py ] && /data/other/mihex/mihex.py -V &
 
 # FRP
 [ -f /data/root/frpc.ini ] && /data/other/xpkg/usr/bin/frpc -c /data/root/frpc.ini &
-[ -e /data/other/xpkg/usr/bin/frps ] && /data/other/xpkg/usr/bin/frps -p 7001 -t **** --dashboard_port 7002 --dashboard_pwd **** &
+[ -f /data/root/frps.ini ] && /data/other/xpkg/usr/bin/frps -c /data/root/frps.ini &
 
 fi

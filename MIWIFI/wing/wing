@@ -1,14 +1,13 @@
 #!/bin/sh
 # WING_URL=
 # _PROT=socks5; _USER=; _PASS=; _HOST=192.168.1.8; _PORT=; _PATH=; _ARGS=; _HASH=
-
 if [ -f /etc/config/miwifi ]; then
 	_MODE=ROUTER
 	_OS=MIWIFI
-	_GFW_LIST=/data/wing
+	_GFW_LIST=`cd "${0%/*}"; pwd`
 	_DNSMASQ_CONF=/tmp/dnsmasq.d
-	PATH=/data/wing:$PATH
-	export LD_LIBRARY_PATH=/data/wing:$LD_LIBRARY_PATH
+	PATH=$_GFW_LIST:$PATH
+	export LD_LIBRARY_PATH=$_GFW_LIST:$LD_LIBRARY_PATH
 elif [ -f /etc/openwrt_release ]; then
 	_MODE=ROUTER
 	_OS=OPENWRT

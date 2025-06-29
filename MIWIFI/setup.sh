@@ -40,7 +40,7 @@ CMDS="$CMDS	uci commit firewall"
 
 # WING
 if [ -f /etc/config/miwifi ]; then
-	CMDS="$CMDS	curl http://yonsm.github.io/DIY/MIWIFI/wing/setup.sh|sh $2"
+	CMDS="$CMDS	curl http://yonsm.github.io/DIY/MIWIFI/wing.sh|sh $2"
 else
 	CMDS="$CMDS	mkdir /data/wing"
 	for FILE in `ls wing|tr " " "?"`

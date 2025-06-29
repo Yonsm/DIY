@@ -1,5 +1,5 @@
 #!/bin/sh
-# curl http://yonsm.github.io/DIY/MIWIFI/wing/setup.sh|sh -s -- [WING]
+# curl http://yonsm.github.io/DIY/MIWIFI/wing.sh|sh -s -- [WING]
 
 _SRC=http://yonsm.github.io/DIY/MIWIFI/wing
 if [ -z $_DST ]; then

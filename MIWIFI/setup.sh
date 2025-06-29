@@ -1,5 +1,5 @@
 #!/bin/sh
-# curl http://yonsm.github.io/DIY/MIWIFI/setup.sh|sh
+# curl http://yonsm.github.io/DIY/MIWIFI/setup.sh|sh -s -- [HOST] [WING]
 
 
 [ "$1" == "-h" ] && echo "Usage: $0 [HOST] [WING] " && exit

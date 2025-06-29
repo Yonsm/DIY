@@ -2,12 +2,13 @@
 # WING_URL=
 # _PROT=socks5; _USER=; _PASS=; _HOST=192.168.1.8; _PORT=; _PATH=; _ARGS=; _HASH=
 if [ -f /etc/config/miwifi ]; then
+	CDIR=`cd "${0%/*}"; pwd`
 	_MODE=ROUTER
 	_OS=MIWIFI
-	_GFW_LIST=`cd "${0%/*}"; pwd`
+	_GFW_LIST=$CDIR
 	_DNSMASQ_CONF=/tmp/dnsmasq.d
-	PATH=$_GFW_LIST:$PATH
-	export LD_LIBRARY_PATH=$_GFW_LIST:$LD_LIBRARY_PATH
+	PATH=$CDIR:$PATH
+	export LD_LIBRARY_PATH=$CDIR:$LD_LIBRARY_PATH
 elif [ -f /etc/openwrt_release ]; then
 	_MODE=ROUTER
 	_OS=OPENWRT
@@ -48,7 +49,7 @@ log() {
 log $1 "Wing to World on $OS in $_MODE mode"
 
 usage() {
-	echo "Usage: $0 <[start]|stop|restart|pause|resume|update|install|status|-s 2/t/s/y/*|-h>"
+	echo "Usage: $0 <[start]|stop|restart|pause|resume|update|status|-s 2/t/s/y/*|-h>"
 	echo
 	echo "$0 [-v[0-5]] <URL>"
 	echo
@@ -62,7 +63,7 @@ update() {
 	_FMT=${_GFW_LIST##*.}
 	[ "$_FMT" = conf -o "$_FMT" = pac ] && _GFW_TMP=/tmp/gfwlist.txt || _GFW_TMP=$_GFW_LIST
 
-	curl -k -o $_GFW_TMP https://raw.githubusercontent.com/Yonsm/OponWrt/main/fix-files/package/helloworld/wing/gfwlist.txt || (echo "githubusercontent.com" > $_GFW_TMP; echo "Update gfwlist failed! You should run wing update again.")
+	curl -k -o $_GFW_TMP https://yonsm.github.io/OponWrt/fix-files/package/helloworld/wing/gfwlist.txt || (echo "githubusercontent.com" > $_GFW_TMP; echo "Update gfwlist failed! You should run wing update again.")
 	if [ $_FMT = conf ]; then
 		sed -e 's_^_server=/_' -e 's_$_/127.0.0.1#5354_' $_GFW_TMP > $_GFW_LIST
 		sed -e 's_^_ipset=/_' -e 's_$_/gfwlist_' $_GFW_TMP >> $_GFW_LIST
@@ -422,19 +423,6 @@ stop() {
 	echo Wing service stopped
 }
 
-install() {
-	if [ $_OS = MIWIFI ]; then
-		uci set firewall.wing=include
-		uci set firewall.wing.type="script"
-		uci set firewall.wing.path="/data/wing/wing restart $1"
-		uci set firewall.wing.enabled="1"
-		uci commit firewall
-		uci show firewall.wing
-	else
-		echo TODO
-	fi
-}
-
 status() {
 	case "$1" in
 	2) tail -f /tmp/ipt2socks.log;;
@@ -468,9 +456,6 @@ resume)
 	;;
 update)
 	update "$2" "$3"
-	;;
-install)
-	install "$2"
 	;;
 -s|status)
 	status "$2"

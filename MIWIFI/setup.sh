@@ -1,45 +1,73 @@
 #!/bin/sh
+# curl http://yonsm.github.io/DIY/MIWIFI/setup.sh|sh
 
-[ "$1" == "-h" ] && echo "Usage: $0 [HOST] [URL] " && exit
-if [ -z $1 ]; then HOST=192.168.31.1; else HOST=$1; fi
+
+[ "$1" == "-h" ] && echo "Usage: $0 [HOST] [WING] " && exit
+
+[ -z $1 ] && HOST=192.168.31.1 || HOST=$1
 
 cd `dirname $0`
 
-echo "# RedMi AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
-echo "# XiaoMi AX7000: https://www.gaicas.com/xiaomi-be7000.html"
-echo "# XiaoMi BE6500 Pro: https://www.gaicas.com/xiaomi-be6500-pro.html"
-echo
-echo "# Root"
-echo  "ssh root@$HOST 'mkdir /data/root'"
-if [ -f ~/.ssh/authorized_keys ]; then
-	echo  "scp -O ~/.ssh/authorized_keys root@$HOST:/data/root"
-	echo  "ssh root@$HOST 'ln -s /data/root/authorized_keys /etc/dropbear/'"
+if [ -f /etc/config/miwifi ]; then
+	CMDS="mkdir /data/root"
+else
+	echo "# RedMi AX6000: https://www.right.com.cn/forum/thread-8253125-1-1.html"
+	echo "# XiaoMi AX7000: https://www.gaicas.com/xiaomi-be7000.html"
+	echo "# XiaoMi BE6500 Pro: https://www.gaicas.com/xiaomi-be6500-pro.html"
+	echo
+	echo  "ssh root@$HOST 'mkdir /data/root'"
+	if [ -f ~/.ssh/authorized_keys ]; then
+		echo  "scp -O ~/.ssh/authorized_keys root@$HOST:/data/root"
+		CMDS="ln -s /data/root/authorized_keys /etc/dropbear/"
+	else
+		CMDS=
+	fi
 fi
-echo  "scp -O root/.profile root@$HOST:/data/root/"
-echo  "scp -O root/opkg.sh root@$HOST:/data/root/"
-echo  "scp -O root/root.sh root@$HOST:/data/root/"
-echo  "#scp -O root/hass.sh root@$HOST:/data/root/"
-echo  "#scp -O root/smb.conf root@$HOST:/data/root/"
-echo  "#scp -O root/alist.sh root@$HOST:/data/root/"
-echo  "#scp -O root/dnspod.sh root@$HOST:/data/root/"
-echo  "ssh root@$HOST 'uci set firewall.root=include'"
-echo  "ssh root@$HOST 'uci set firewall.root.type=script'"
-echo  "ssh root@$HOST 'uci set firewall.root.path=/data/root/root.sh'"
-echo  "ssh root@$HOST 'uci set firewall.root.enabled=1'"
-echo  "ssh root@$HOST 'uci commit firewall'"
 
+# SFTP
+CMDS="$CMDS	mkdir -p /data/other/libexec"
+FILES=other/libexec/sftp-server
 
-echo
-echo "# Wing"
-echo  "ssh root@$HOST 'mkdir /data/wing'"
-for FILE in `ls wing|tr " " "?"`
-do
-	FILE=`echo $FILE|tr "?" " "`
-	echo  "scp -O wing/$FILE root@$HOST:/data/wing/"
+# ROOT
+for FILE in .profile opkg.sh root.sh; do
+	FILES="$FILES root/$FILE"
 done
-echo  "ssh root@$HOST '/data/wing/wing install trojan://****@****.***:443'"
+CMDS="$CMDS	uci set firewall.root=include"
+CMDS="$CMDS	uci set firewall.root.type=script"
+CMDS="$CMDS	uci set firewall.root.path=/data/root/root.sh"
+CMDS="$CMDS	uci set firewall.root.enabled=1"
+CMDS="$CMDS	uci commit firewall"
 
-echo
-echo "# SFTP"
-echo  "ssh root@$HOST 'mkdir -p /data/other/libexec'"
-echo  "scp -O other/libexec/sftp-server root@$HOST:/data/other/libexec/"
+# WING
+if [ -f /etc/config/miwifi ]; then
+	CMDS="$CMDS	curl http://yonsm.github.io/DIY/MIWIFI/wing/setup.sh|sh $2"
+else
+	CMDS="$CMDS	mkdir /data/wing"
+	for FILE in `ls wing|tr " " "?"`
+	do
+		FILE=`echo $FILE|tr "?" " "`
+		FILES="$FILES wing/$FILE"
+	done
+	CMDS="$CMDS	uci set firewall.wing=include"
+	CMDS="$CMDS	uci set firewall.wing.type=script"
+	CMDS="$CMDS	uci set firewall.wing.path=/data/wing/wing restart $2"
+	CMDS="$CMDS	uci set firewall.wing.enabled=1"
+	CMDS="$CMDS	uci commit firewall"
+fi
+
+for CMD in `echo "$CMDS"|tr " " "?"`
+do
+	CMD=`echo $CMD|tr "?" " "`
+	if [ -f /etc/config/miwifi ]; then
+		echo  $CMD
+	else
+		echo  "ssh root@$HOST '$CMD'"
+	fi
+done
+for FILE in $FILES; do
+	if [ -f /etc/config/miwifi ]; then
+		echo "curl -o /data/$FILE http://yonsm.github.io/DIY/MIWIFI/$FILE"
+	else
+		echo  "scp -O $FILE root@$HOST:/data/$FILE"
+	fi
+done

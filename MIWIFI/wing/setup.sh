@@ -6,7 +6,7 @@ if [ -z $_DST ]; then
 	if [ -f /etc/config/miwifi ]; then
 		_DST=/data/wing
 	else
-		echo "Support MiWiFi only"
+		echo "Support MiWiFi only $1"
 		exit 1
 	fi
 fi

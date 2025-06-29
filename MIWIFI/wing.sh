@@ -11,6 +11,14 @@ if [ -z $_DST ]; then
 	fi
 fi
 
+if [ "$1" == "remove" ]; then
+	uci del firewall.wing
+	uci commit firewall
+	/data/wing/wing stop
+	rm -rf /data/wing
+	exit
+fi
+
 if [ ! -f $_DST/wing ]; then
 	[ ! -d $_DST ] && mkdir -p $_DST
 	for FILE in dns-forwarder gfwlist.conf ipt2socks llibsodium.so.23 ibudns.so.0 ss-redir ssr-redir trojan wing; do

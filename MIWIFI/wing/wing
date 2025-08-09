@@ -2,7 +2,7 @@
 # WING_URL=
 # _PROT=socks5; _USER=; _PASS=; _HOST=192.168.1.8; _PORT=; _PATH=; _ARGS=; _HASH=
 if [ -f /etc/config/miwifi ]; then
-	CDIR=`cd "${0%/*}"; pwd`
+	CDIR=/data/wing
 	_MODE=ROUTER
 	_OS=MIWIFI
 	_GFW_LIST=$CDIR

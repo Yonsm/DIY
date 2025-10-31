@@ -2,7 +2,7 @@
 # curl http://yonsm.github.io/DIY/MIWIFI/setup.sh|sh -s -- [HOST] [WING]
 
 
-[ "$1" == "-h" ] && echo "Usage: $0 [HOST] [WING] " && exit
+[ "$1" == "-h" ] && echo "Usage: $0 [HOST] [WING_URL|NO] [SMB_PASS]" && exit
 
 [ -z $1 ] && HOST=192.168.31.1 || HOST=$1
 
@@ -34,13 +34,13 @@ for FILE in .profile opkg.sh root.sh; do
 done
 CMDS="$CMDS	uci set firewall.root=include"
 CMDS="$CMDS	uci set firewall.root.type=script"
-CMDS="$CMDS	uci set firewall.root.path=/data/root/root.sh"
+CMDS="$CMDS	uci set firewall.root.path=/data/root/root.sh $2 $3"
 CMDS="$CMDS	uci set firewall.root.enabled=1"
 CMDS="$CMDS	uci commit firewall"
 
 # WING
 if [ -f /etc/config/miwifi ]; then
-	CMDS="$CMDS	curl http://yonsm.github.io/DIY/MIWIFI/wing.sh|sh $2"
+	CMDS="$CMDS	curl http://yonsm.github.io/DIY/MIWIFI/wing.sh|sh"
 else
 	CMDS="$CMDS	mkdir /data/wing"
 	for FILE in `ls wing|tr " " "?"`
@@ -48,11 +48,6 @@ else
 		FILE=`echo $FILE|tr "?" " "`
 		FILES="$FILES wing/$FILE"
 	done
-	CMDS="$CMDS	uci set firewall.wing=include"
-	CMDS="$CMDS	uci set firewall.wing.type=script"
-	CMDS="$CMDS	uci set firewall.wing.path=/data/wing/wing restart $2"
-	CMDS="$CMDS	uci set firewall.wing.enabled=1"
-	CMDS="$CMDS	uci commit firewall"
 fi
 
 for CMD in `echo "$CMDS"|tr " " "?"`

@@ -9,7 +9,7 @@ ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
 ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
 
 # HTTPS
-[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81 ssl; listen [::]:81 ssl/' /etc/nginx/conf.d/443.conf
+[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81 ssl; listen [::]:81/' /etc/nginx/conf.d/443.conf
 [ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/[::]:81/' /etc/sysapihttpd/sysapihttpd.conf
 [ -f /etc/nginx/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 [ -f /etc/sysapihttpd/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/sysapihttpd/miwifi-webinitrd.conf
@@ -47,22 +47,7 @@ if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/other/libexec/sftp-server ]; 
 	mount --bind /data/other/libexec /usr/libexec
 fi
 
-# SMB
-if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
-	[ -z $1 ] && SMBPWD=admin || SMBPWD=$1
-	! grep admin /etc/passwd && echo "admin:x:0:0:root:/root:/bin/ash" >> /etc/passwd
-	echo -e "$SMBPWD\n$SMBPWD" | smbpasswd -s -a admin
-	sed -i  's/\tinit_config/\t#nit_config/' /etc/init.d/samba
-	ln -sf /data/root/smb.conf /etc/samba/smb.conf
-	/etc/init.d/samba restart
-fi
 
-# MQTT & MiHex
-[ -f /data/other/xpkg/etc/mosquitto/mosquitto.conf ] && /data/other/xpkg/usr/sbin/mosquitto -d -c /data/other/xpkg/etc/mosquitto/mosquitto.conf &
-[ -f /data/other/mihex/mihex.py ] && /data/other/mihex/mihex.py -V &
-
-# FRP
-[ -f /data/root/frpc.ini ] && /data/other/xpkg/usr/bin/frpc -c /data/root/frpc.ini &
-[ -f /data/root/frps.ini ] && /data/other/xpkg/usr/bin/frps -c /data/root/frps.ini &
+[ -f /data/root/svcs.sh ] && /data/root/svcs.sh $1 $2 &
 
 fi

@@ -1,4 +1,3 @@
-console.log('小米路由器增强功能已加载')
 
 // 处理导入数据
 function processImport(text) {
@@ -155,34 +154,18 @@ function compareAddr(ip1, ip2) {
 	return 0
 }
 
-var sortFields = []
-function sortByField(tbody, idx) {
+var sortRevs = []
+function sortTable(tbody, id) {
 	const rows = Array.from(tbody.querySelectorAll('tr'))
 	rows.sort((row1, row2) => {
-		const text1 = row1.cells[idx]?.textContent.trim() || ''
-		const text2 = row2.cells[idx]?.textContent.trim() || ''
-
-		if (idx == 2) {
-			return sortFields[idx] ? compareAddr(text2, text1) : compareAddr(text1, text2)
-		}
-		return sortFields[idx] ? text2.localeCompare(text1) : text1.localeCompare(text2)
+		let el1 = (id < 4) ? row1.cells[id] : row1.cells[0].children[0].children[1].children[0].children[0].children[1]
+		let el2 = (id < 4) ? row2.cells[id] : row2.cells[0].children[0].children[1].children[0].children[0].children[1]
+		let text1 = el1?.textContent.trim() || ''
+		let text2 = el2?.textContent.trim() || ''
+		if (sortRevs[id]) [text1, text2] = [text2, text1]
+		return (id == 1 || id > 3) ? compareAddr(text1, text2) : text1.localeCompare(text2)
 	})
-
-	sortFields[idx] = !sortFields[idx]
-	while (tbody.firstChild) tbody.removeChild(tbody.firstChild)
-	rows.forEach(row => tbody.appendChild(row))
-}
-
-var sortConns = []
-function sortByConn(tbody, idx) {
-	const rows = Array.from(tbody.querySelectorAll('tr'))
-	rows.sort((row1, row2) => {
-		const text1 = row1.cells[0].children[0].children[1].children[0].children[0].children[1]?.textContent.trim() || ''
-		const text2 = row2.cells[0].children[0].children[1].children[0].children[0].children[1]?.textContent.trim() || ''
-		return sortConns[idx] ? compareAddr(text2, text1) : compareAddr(text1, text2)
-	})
-
-	sortConns[idx] = !sortConns[idx]
+	sortRevs[id] = !sortRevs[id]
 	while (tbody.firstChild) tbody.removeChild(tbody.firstChild)
 	rows.forEach(row => tbody.appendChild(row))
 }
@@ -198,7 +181,7 @@ function init_lannetset(list) {
 	addbatch.onclick = addBatch
 	addlist.parentElement.appendChild(addbatch)
 
-	// 修改表头，增加反选、排序功能
+	// 修改表头
 	const ths = list.parentElement.children[0].children[0].children
 	ths[0].style.textAlign = 'center'
 	ths[0].textContent = '✅'
@@ -206,9 +189,9 @@ function init_lannetset(list) {
 
 	for (let i = 1; i <= 3; i++) {
 		ths[i].style.color = 'green'
-		ths[i].onclick = () => sortByField(list, i)
+		ths[i].onclick = () => sortTable(list, i)
 	}
-	sortByField(list, 2)
+	sortTable(list, 2)
 	return true
 }
 
@@ -218,24 +201,29 @@ function init_homedevices(list) {
 
 	for (let i = 0; i < tables.length; i++) {
 		const chs = tables[i].children
-		if (chs.length > 0) {
+		if (chs.length > 1 && chs[1].children.length > 1) {
 			const th = chs[0].children[0].children[0]
 			th.style.color = 'green'
-			th.onclick = () => sortByConn(chs[1], i)
-			sortByConn(chs[1], i)
+			th.onclick = () => sortTable(chs[1], 4 + i)
+			sortTable(chs[1], 4 + i)
 		}
 	}
 	return true
 }
 
 // 初始化逻辑
+console.log('小米路由器增强功能已加载')
 let lannetset = location.pathname.includes('/web/setting/lannetset')
 const list = document.getElementById(lannetset ? 'bandlist' : 'devicesTables')
-const observer = new MutationObserver(mutations => {
-	mutations.forEach(mutation => {
-		if (mutation.addedNodes.length > 0 && (lannetset ? init_lannetset(list) : init_homedevices(list))) {
-			observer.disconnect()
-		}
+if (list) {
+	const observer = new MutationObserver(mutations => {
+		mutations.forEach(mutation => {
+			if (mutation.addedNodes.length > 0 && (lannetset ? init_lannetset(list) : init_homedevices(list))) {
+				observer.disconnect()
+			}
+		})
 	})
-})
-observer.observe(list, { childList: true })
+	observer.observe(list, { childList: true })
+} else {
+	console.log('未找到设备列表')
+}

@@ -1,0 +1,16 @@
+{
+	"manifest_version": 3,
+	"name": "小米路由器增强",
+	"version": "1.0",
+	"description": "在小米路由器控制台中添加批量导入静态 DHCP 功能",
+	"permissions": ["activeTab", "scripting"],
+	"content_scripts": [
+		{
+			"matches": ["*://*/*/web/setting/lannetset", "*://*/*/web/home"],
+			"js": ["content.js"]
+		}
+	],
+	"icons": {
+		"48": "icon.png"
+	}
+}

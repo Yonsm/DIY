@@ -154,19 +154,40 @@ function compareAddr(ip1, ip2) {
 	return 0
 }
 
-var sortRevs = []
+function ipToInt(ip) {
+	return ip.split('.').reduce((result, octet, index) => {
+		return result + (parseInt(octet) << ((3 - index) * 8));
+	}, 0);
+}
+
+function tmToSec(tm) {
+	const units = { '天': 86400, '小时': 3600, '分': 60, '秒': 1 }
+	let seconds = 0
+	let match
+	const regex = /(\d+)(天|小时|分|秒)/g
+	while ((match = regex.exec(tm))) {
+		seconds += parseInt(match[1]) * units[match[2]]
+	}
+	return seconds
+}
+
+var sortRevs = [0, 0, 0, 0, 2, 2, 2, 2, 2]
 function sortTable(tbody, id) {
+	const idx = parseInt(sortRevs[id] / 2) % 4
 	const rows = Array.from(tbody.querySelectorAll('tr'))
 	rows.sort((row1, row2) => {
-		let el1 = (id < 4) ? row1.cells[id] : row1.cells[0].children[0].children[1].children[0].children[0].children[1]
-		let el2 = (id < 4) ? row2.cells[id] : row2.cells[0].children[0].children[1].children[0].children[0].children[1]
-		let text1 = el1?.textContent.trim() || ''
-		let text2 = el2?.textContent.trim() || ''
-		if (sortRevs[id]) [text1, text2] = [text2, text1]
-		return (id == 2 || id >= 4) ? compareAddr(text1, text2) : text1.localeCompare(text2)
+		const getEl = (row) => id < 4 ? row.cells[id] : (idx < 3 ? row.querySelectorAll('.v')[idx] : row.querySelector('.name'))
+		let [t1, t2] = [getEl(row1), getEl(row2)].map(el => el?.textContent.trim() || '')
+		if (sortRevs[id] % 2) [t1, t2] = [t2, t1]
+		if (id == 2 || (id >= 4 && idx == 1)) {
+		  return ipToInt(t1) - ipToInt(t2)
+		} else if (id >= 4 && idx == 0) {
+		  return tmToSec(t1) - tmToSec(t2)
+		}
+		return t1.localeCompare(t2)
 	})
-	sortRevs[id] = !sortRevs[id]
-	while (tbody.firstChild) tbody.removeChild(tbody.firstChild)
+	sortRevs[id]++
+	tbody.textContent = ''
 	rows.forEach(row => tbody.appendChild(row))
 }
 
@@ -174,19 +195,14 @@ function uncomment(el) {
 	const it = document.createNodeIterator(el, NodeFilter.SHOW_COMMENT)
 	for (let node; node = it.nextNode();) {
 		const content = node.nodeValue.trim()
-		if (!content) continue
-		try {
-			const div = document.createElement('div')
-			div.innerHTML = content
-			const fragment = document.createDocumentFragment()
-			while (div.firstChild) {
-				fragment.appendChild(div.firstChild)
-			}
-			if (node.parentNode) {
-				node.parentNode.replaceChild(fragment, node)
-			}
-		} catch (error) {
-			console.error('解析注释内容失败', error);
+		if (!content || !node.parentNode) continue
+		const div = document.createElement('div')
+		div.innerHTML = content
+		const parent = node.parentNode
+		const nextSibling = node.nextSibling
+		parent.removeChild(node)
+		while (div.firstChild) {
+			parent.insertBefore(div.firstChild, nextSibling)
 		}
 	}
 }
@@ -220,6 +236,7 @@ function devices(list) {
 	const tables = list.children
 	if (!tables) return console.log('未找到设备表格')
 
+	document.querySelectorAll('.devnetinfo').forEach(uncomment)
 	for (let i = 0; i < tables.length; i++) {
 		const chs = tables[i].children
 		if (chs.length > 1 && chs[1].children.length > 1) {
@@ -230,7 +247,6 @@ function devices(list) {
 		}
 	}
 
-	document.querySelectorAll('.devnetinfo').forEach(uncomment)
 	return true
 }
 

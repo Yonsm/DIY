@@ -203,8 +203,8 @@ inject() {
 		fi
 
 		if [ $1 == -C ]; then
-			[ "$WING_PAC" = "1" ] && 
-				networksetup -setautoproxystate "$WING_NETWORK" on || 
+			[ "$WING_PAC" = "1" ] &&
+				networksetup -setautoproxystate "$WING_NETWORK" on ||
 				networksetup -setsocksfirewallproxystate "$WING_NETWORK" on
 			return 0
 		elif [ $1 == -D ]; then
@@ -213,7 +213,7 @@ inject() {
 		else
 			echo "Local Network: $WING_NETWORK"
 			echo "export ALL_PROXY=socks5://$2:$3"
-			[ "$WING_PAC" = "1" ] && 
+			[ "$WING_PAC" = "1" ] &&
 				networksetup setautoproxyurl "$WING_NETWORK" http://127.0.0.1/gfwlist.pac ||
 				networksetup setsocksfirewallproxy "$WING_NETWORK" $2 $3
 		fi
@@ -340,7 +340,7 @@ start() {
 			local RUN_TYPE=client
 			local LOCAL_PORT=1080
 		fi
-		#resolve $1
+		resolve $1
 		[ -z $_PORT ] && _PORT=443
 		echo "{\"run_type\":\"$RUN_TYPE\",\"local_addr\":\"0.0.0.0\",\"local_port\":$LOCAL_PORT,\"remote_addr\":\"$_HOST\",\"remote_port\":$_PORT,\"password\":[\"${_USER//%/\\x}\"],\"log_level\":$1,\"ssl\":{\"verify\":false}}" > /tmp/trojan.conf
 		XCMD="trojan -c /tmp/trojan.conf"

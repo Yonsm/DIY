@@ -170,7 +170,28 @@ function sortTable(tbody, id) {
 	rows.forEach(row => tbody.appendChild(row))
 }
 
-function init_lannetset(list) {
+function uncomment(el) {
+	const it = document.createNodeIterator(el, NodeFilter.SHOW_COMMENT)
+	for (let node; node = it.nextNode();) {
+		const content = node.nodeValue.trim()
+		if (!content) continue
+		try {
+			const div = document.createElement('div')
+			div.innerHTML = content
+			const fragment = document.createDocumentFragment()
+			while (div.firstChild) {
+				fragment.appendChild(div.firstChild)
+			}
+			if (node.parentNode) {
+				node.parentNode.replaceChild(fragment, node)
+			}
+		} catch (error) {
+			console.error('解析注释内容失败', error);
+		}
+	}
+}
+
+function lannetset(list) {
 	const addlist = document.getElementById('addlist')
 	if (!addlist) return console.log('未找到静态 DHCP 添加按钮')
 
@@ -195,7 +216,7 @@ function init_lannetset(list) {
 	return true
 }
 
-function init_homedevices(list) {
+function devices(list) {
 	const tables = list.children
 	if (!tables) return console.log('未找到设备表格')
 
@@ -208,17 +229,19 @@ function init_homedevices(list) {
 			sortTable(chs[1], 4 + i)
 		}
 	}
+
+	document.querySelectorAll('.devnetinfo').forEach(uncomment)
 	return true
 }
 
 // 初始化逻辑
 console.log('小米路由器增强功能已加载')
-let lannetset = location.pathname.includes('/web/setting/lannetset')
-const list = document.getElementById(lannetset ? 'bandlist' : 'devicesTables')
+let is_lannetset = location.pathname.includes('/web/setting/lannetset')
+const list = document.getElementById(is_lannetset ? 'bandlist' : 'devicesTables')
 if (list) {
 	const observer = new MutationObserver(mutations => {
 		mutations.forEach(mutation => {
-			if (mutation.addedNodes.length > 0 && (lannetset ? init_lannetset(list) : init_homedevices(list))) {
+			if (mutation.addedNodes.length > 0 && (is_lannetset ? lannetset(list) : devices(list))) {
 				observer.disconnect()
 			}
 		})

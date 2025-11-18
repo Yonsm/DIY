@@ -1,8 +1,8 @@
 {
 	"manifest_version": 3,
-	"name": "小米路由器增强",
+	"name": "小米路由器+",
 	"version": "1.0",
-	"description": "在小米路由器控制台中添加批量导入静态 DHCP 功能",
+	"description": "为小米路由器控制台添加设备排序、批量选择、批量导入等功能",
 	"permissions": ["activeTab", "scripting"],
 	"content_scripts": [
 		{

@@ -187,7 +187,7 @@ function sortByConn(tbody, idx) {
 	rows.forEach(row => tbody.appendChild(row))
 }
 
-function init_lannetset() {
+function init_lannetset(list) {
 	const addlist = document.getElementById('addlist')
 	if (!addlist) return console.log('未找到静态 DHCP 添加按钮')
 
@@ -199,20 +199,21 @@ function init_lannetset() {
 	addlist.parentElement.appendChild(addbatch)
 
 	// 修改表头，增加反选、排序功能
-	const bandlist = document.getElementById('bandlist')
-	const ths = bandlist.parentElement.children[0].children[0].children
+	const ths = list.parentElement.children[0].children[0].children
 	ths[0].style.textAlign = 'center'
 	ths[0].textContent = '✅'
 	ths[0].onclick = selectAll
 
 	for (let i = 1; i <= 3; i++) {
 		ths[i].style.color = 'green'
-		ths[i].onclick = () => sortByField(bandlist, i)
+		ths[i].onclick = () => sortByField(list, i)
 	}
+	sortByField(list, 2)
+	return true
 }
 
-function init_homedevices() {
-	const tables = document.getElementById('devicesTables').children
+function init_homedevices(list) {
+	const tables = list.children
 	if (!tables) return console.log('未找到设备表格')
 
 	for (let i = 0; i < tables.length; i++) {
@@ -221,22 +222,20 @@ function init_homedevices() {
 			const th = chs[0].children[0].children[0]
 			th.style.color = 'green'
 			th.onclick = () => sortByConn(chs[1], i)
+			sortByConn(chs[1], i)
 		}
 	}
 	return true
 }
 
 // 初始化逻辑
-if (location.pathname.includes('/web/setting/lannetset')) {
-	init_lannetset()
-} else {
-	const tables = document.getElementById('devicesTables')
-	const observer = new MutationObserver(mutations => {
-		mutations.forEach(mutation => {
-			if (mutation.addedNodes.length > 0 && init_homedevices()) {
-				observer.disconnect()
-			}
-		})
+let lannetset = location.pathname.includes('/web/setting/lannetset')
+const list = document.getElementById(lannetset ? 'bandlist' : 'devicesTables')
+const observer = new MutationObserver(mutations => {
+	mutations.forEach(mutation => {
+		if (mutation.addedNodes.length > 0 && (lannetset ? init_lannetset(list) : init_homedevices(list))) {
+			observer.disconnect()
+		}
 	})
-	observer.observe(tables, { childList: true })
-}
+})
+observer.observe(list, { childList: true })

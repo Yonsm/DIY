@@ -163,7 +163,7 @@ function sortTable(tbody, id) {
 		let text1 = el1?.textContent.trim() || ''
 		let text2 = el2?.textContent.trim() || ''
 		if (sortRevs[id]) [text1, text2] = [text2, text1]
-		return (id == 1 || id > 3) ? compareAddr(text1, text2) : text1.localeCompare(text2)
+		return (id == 2 || id >= 4) ? compareAddr(text1, text2) : text1.localeCompare(text2)
 	})
 	sortRevs[id] = !sortRevs[id]
 	while (tbody.firstChild) tbody.removeChild(tbody.firstChild)

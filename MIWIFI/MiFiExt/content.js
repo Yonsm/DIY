@@ -171,22 +171,21 @@ function tmToSec(tm) {
 	return seconds
 }
 
-var sortRevs = [0, 0, 0, 0, 2, 2, 2, 2, 2]
+var sortRevs = []
 function sortTable(tbody, id) {
-	const idx = parseInt(sortRevs[id] / 2) % 4
 	const rows = Array.from(tbody.querySelectorAll('tr'))
 	rows.sort((row1, row2) => {
-		const getEl = (row) => id < 4 ? row.cells[id] : (idx < 3 ? row.querySelectorAll('.v')[idx] : row.querySelector('.name'))
+		const getEl = (row) => id < 4 ? row.cells[id] : (id % 4 == 0 ? row.querySelector('.name') : row.querySelectorAll('.v')[id % 4 - 1])
 		let [t1, t2] = [getEl(row1), getEl(row2)].map(el => el?.textContent.trim() || '')
-		if (sortRevs[id] % 2) [t1, t2] = [t2, t1]
-		if (id == 2 || (id >= 4 && idx == 1)) {
-		  return ipToInt(t1) - ipToInt(t2)
-		} else if (id >= 4 && idx == 0) {
-		  return tmToSec(t1) - tmToSec(t2)
+		if (sortRevs[id]) [t1, t2] = [t2, t1]
+		if (t1.includes('.')) {
+			return ipToInt(t1) - ipToInt(t2)
+		} else if (t1.includes('秒')) {
+			return tmToSec(t1) - tmToSec(t2)
 		}
 		return t1.localeCompare(t2)
 	})
-	sortRevs[id]++
+	sortRevs[id] = !sortRevs[id]
 	tbody.textContent = ''
 	rows.forEach(row => tbody.appendChild(row))
 }
@@ -220,15 +219,15 @@ function lannetset(list) {
 
 	// 修改表头
 	const ths = list.parentElement.children[0].children[0].children
-	ths[0].style.textAlign = 'center'
+	ths[0].style.cssText = 'cursor:pointer;text-align:center;'
 	ths[0].textContent = '✅'
 	ths[0].onclick = selectAll
 
 	for (let i = 1; i <= 3; i++) {
-		ths[i].style.color = 'green'
+		ths[i].style.cssText = 'cursor:pointer;color:green;'
 		ths[i].onclick = () => sortTable(list, i)
 	}
-	sortTable(list, 2)
+	// sortTable(list, 2)
 	return true
 }
 
@@ -241,9 +240,15 @@ function devices(list) {
 		const chs = tables[i].children
 		if (chs.length > 1 && chs[1].children.length > 1) {
 			const th = chs[0].children[0].children[0]
-			th.style.color = 'green'
-			th.onclick = () => sortTable(chs[1], 4 + i)
-			sortTable(chs[1], 4 + i)
+			const ts = ['名称', '时长', '网址', '硬件']
+			for (let j = 0; j < 4; j++) {
+				const span = document.createElement('span')
+				span.style.cssText = 'cursor:pointer;color:green;font-size:12px;margin:5px'
+				span.onclick = () => sortTable(chs[1], 4 + i * 4 + j)
+				span.textContent = ts[j]
+				th.appendChild(span)
+			}
+			//sortTable(chs[1], 4 + i * 4 + 2)
 		}
 	}
 

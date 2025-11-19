@@ -47,7 +47,7 @@ function sortTable(tbody, id) {
 	})
 	sortRevs[id] = !sortRevs[id]
 	tbody.textContent = ''
-	rows.forEach(tbody.appendChild)
+	rows.forEach(row => tbody.appendChild(row))
 }
 
 function sendRequest(call, args) {
@@ -78,7 +78,7 @@ async function batchImport(head, text) {
 		const [addr, value, name] = parts
 		const ip = addr.includes('.') ? addr : prefix + addr
 		if (head == '转发') {
-			items.push({ name, proto: 1, sport: value, ip, dport: value })
+			items.push({ name, proto: parts.length > 4 ? parts[4] : 1, sport: value, ip, dport: parts.length > 3 ? parts[3] : value })
 		} else {
 			items.push({ ip, mac: value, name })
 		}
@@ -196,12 +196,12 @@ function init_home(devicesTables) {
 			const ts = ['名称', '时长', '网址', '硬件']
 			for (let j = 0; j < 4; j++) {
 				const span = document.createElement('span')
-				span.style.cssText = 'cursor:pointer;color:green;font-size:12px;margin:4px'
+				span.style.cssText = 'cursor:pointer;color:green;font-size:12px;margin:3px'
 				span.onclick = () => sortTable(chs[1], 4 + i * 4 + j)
 				span.textContent = ts[j]
 				th.appendChild(span)
 			}
-			//sortTable(chs[1], 4 + i * 4 + 2)
+			sortTable(chs[1], 4 + i * 4 + 2)
 		}
 	}
 
@@ -227,7 +227,7 @@ function init_lannetset(bandlist) {
 		ths[i].onclick = () => sortTable(bandlist, i)
 	}
 
-	// sortTable(list, 2)
+	sortTable(list, 2)
 	return true
 }
 
@@ -236,7 +236,7 @@ function init_nat(natlist_port) {
 	const button = td.firstChild.cloneNode(true)
 	button.firstChild.innerText = '批量添加'
 	button.style.marginLeft = '10px'
-	button.onclick = (event) => { event.stopPropagation(); popupDialog('转发', '网址 端口 名称', '1 81 WEB1\n2 82 WEB2') }
+	button.onclick = (event) => { event.stopPropagation(); popupDialog('转发', '网址 端口 名称 [目标] [协议]', '1 81 WEB1\n2 82 WEB2 80') }
 	td.appendChild(button)
 	return true
 }

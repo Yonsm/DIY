@@ -6,7 +6,7 @@
 	"permissions": ["activeTab", "scripting"],
 	"content_scripts": [
 		{
-			"matches": ["*://*/*/web/setting/lannetset", "*://*/*/web/home"],
+			"matches": ["*://*/*/web/home", "*://*/*/web/setting/lannetset", "*://*/*/web/prosetting/nat"],
 			"js": ["content.js"]
 		}
 	],

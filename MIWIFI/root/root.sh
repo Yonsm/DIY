@@ -4,13 +4,13 @@
 if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
 
-ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
-ip6tables -I INPUT  -p tcp --dport 221 -j ACCEPT
-ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 222 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
 
 # HTTPS
-[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/81 ssl; listen [::]:81/' /etc/nginx/conf.d/443.conf
-[ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/[::]:81/' /etc/sysapihttpd/sysapihttpd.conf
+[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf
+[ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/[::]:82/' /etc/sysapihttpd/sysapihttpd.conf
 [ -f /etc/nginx/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 [ -f /etc/sysapihttpd/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/sysapihttpd/miwifi-webinitrd.conf
 [ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/

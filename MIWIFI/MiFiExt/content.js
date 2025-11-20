@@ -227,7 +227,7 @@ function init_lannetset(bandlist) {
 		ths[i].onclick = () => sortTable(bandlist, i)
 	}
 
-	sortTable(list, 2)
+	sortTable(bandlist, 2)
 	return true
 }
 
@@ -249,11 +249,14 @@ function init() {
 
 	const el = document.getElementById(node)
 	if (!el) return console.log('未找到匹配元素')
+	let success = false
 	const observer = new MutationObserver(mutations => {
 		for (const mutation of mutations) {
-			if (mutation.addedNodes.length > 0 && (window['init_' + page](el))) {
-				observer.disconnect()
-				break
+			if (!success && mutation.addedNodes.length > 0) {
+				if (success = window['init_' + page](el)) {
+					observer.disconnect()
+					break
+				}
 			}
 		}
 	})

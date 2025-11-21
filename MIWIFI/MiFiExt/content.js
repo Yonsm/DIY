@@ -69,7 +69,8 @@ function sendRequest(call, args) {
 
 async function batchImport(head, text) {
 	const items = []
-	const prefix = document.querySelector('[data-ip]').dataset.ip.split('.').slice(0, 3).join('.') + '.'
+	const router = document.querySelector('[data-ip]')?.dataset.ip || document.querySelector('[name=ip]')?.value || '192.168.31.1'
+	const prefix = router.split('.').slice(0, 3).join('.') + '.'
 	for (let line of text.trim().split('\n')) {
 		const text = line.trim()
 		if (!text) return
@@ -242,7 +243,8 @@ function init_nat(natlist_port) {
 }
 
 function init() {
-	document.querySelector('.goto-topo').firstChild.href = '/cgi-bin/luci/web/topo'
+	const topo = document.querySelector('.goto-topo')
+	if (topo) topo.firstChild.href = '/cgi-bin/luci/web/topo'
 
 	const pages = { 'home': 'devicesTables', 'lannetset': 'bandlist', 'nat': 'natlist_port' }
 	const page = location.pathname.split('/').pop()

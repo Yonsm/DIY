@@ -4,21 +4,8 @@
 if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
 
-#ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
-#ip6tables -I INPUT  -p tcp --dport 222 -j ACCEPT
-#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
-
-# HTTPS
-[ -f /etc/nginx/conf.d/443.conf ] && sed -i 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf
-[ -f /etc/sysapihttpd/sysapihttpd.conf ] && sed -i 's/443/[::]:82/' /etc/sysapihttpd/sysapihttpd.conf
-[ -f /etc/nginx/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
-[ -f /etc/sysapihttpd/miwifi-webinitrd.conf ] && sed -i 's/isluci "0"/isluci "1"/' /etc/sysapihttpd/miwifi-webinitrd.conf
-[ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/
-[ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
-[ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
-[ -f /etc/init.d/nginx ] &&  /etc/init.d/nginx restart || /etc/init.d/sysapihttpd restart
-
 # SSH
+#ip6tables -I INPUT  -p tcp --dport 222 -j ACCEPT
 host_key=/etc/dropbear/dropbear_rsa_host_key
 host_key_bk=/data/root/dropbear_rsa_host_key
 [ -f $host_key_bk ] && ln -sf $host_key_bk $host_key
@@ -47,7 +34,26 @@ if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/other/libexec/sftp-server ]; 
 	mount --bind /data/other/libexec /usr/libexec
 fi
 
+# HTTPS
+#ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
+sed -i -e '/[::]:443/d' -e 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf
+sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
+[ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/
+[ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
+[ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
+/etc/init.d/nginx restart
 
-[ -f /data/root/svcs.sh ] && /data/root/svcs.sh $1 $2 &
+# SMB
+if [ -f /data/root/smb.conf ] && ! grep \#nit_config /etc/init.d/samba; then
+	[ -z $2 ] && SMBPWD=admin || SMBPWD=$2
+	! grep admin /etc/passwd && echo "admin:x:0:0:root:/root:/bin/ash" >> /etc/passwd
+	echo -e "$SMBPWD\n$SMBPWD" | smbpasswd -s -a admin
+	sed -i  's/\tinit_config/\t#nit_config/' /etc/init.d/samba
+	ln -sf /data/root/smb.conf /etc/samba/smb.conf
+	/etc/init.d/samba restart
+fi
+
+[ -f /data/root/other.sh ] && /data/root/other.sh $1 &
 
 fi

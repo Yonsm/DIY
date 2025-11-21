@@ -36,7 +36,7 @@ fi
 
 # HTTPS
 #ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
-#ip6tables -I INPUT  -p tcp --dport 86 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
 sed -i 's#isluci "0"#isluci "1"#g' /etc/nginx/miwifi-webinitrd.conf
 sed -i 's#include /etc#include\t/data/root/nginx/*.conf;\n\tinclude\t/etc#' /etc/nginx/nginx.conf
 sed -i -e '/[::]:443/d' -e 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf

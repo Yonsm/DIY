@@ -242,6 +242,8 @@ function init_nat(natlist_port) {
 }
 
 function init() {
+	document.querySelector('.goto-topo').firstChild.href = '/cgi-bin/luci/web/topo'
+
 	const pages = { 'home': 'devicesTables', 'lannetset': 'bandlist', 'nat': 'natlist_port' }
 	const page = location.pathname.split('/').pop()
 	const node = pages[page]

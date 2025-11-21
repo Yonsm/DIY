@@ -6,7 +6,7 @@
 	"permissions": ["activeTab", "scripting"],
 	"content_scripts": [
 		{
-			"matches": ["*://*/*/web/home", "*://*/*/web/setting/lannetset", "*://*/*/web/prosetting/nat"],
+			"matches": ["*://*/cgi-bin/luci/;stok=*"],
 			"js": ["content.js"]
 		}
 	],

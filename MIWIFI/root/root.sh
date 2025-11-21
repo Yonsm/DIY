@@ -5,7 +5,7 @@ if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
 
 # SSH
-#ip6tables -I INPUT  -p tcp --dport 222 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 92 -j ACCEPT
 host_key=/etc/dropbear/dropbear_rsa_host_key
 host_key_bk=/data/root/dropbear_rsa_host_key
 [ -f $host_key_bk ] && ln -sf $host_key_bk $host_key
@@ -36,7 +36,7 @@ fi
 
 # HTTPS
 #ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
-#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
+#ip6tables -I INPUT  -p tcp --dport 86 -j ACCEPT
 sed -i -e '/[::]:443/d' -e 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf
 sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 [ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/

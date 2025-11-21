@@ -41,7 +41,7 @@ sed -i -e '/[::]:443/d' -e 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443
 sed -i 's/isluci "0"/isluci "1"/' /etc/nginx/miwifi-webinitrd.conf
 [ -f /data/root/cert.crt ] && ln -sf /data/root/cert.crt /etc/nginx/
 [ -f /data/root/cert.key ] && ln -sf /data/root/cert.key /etc/nginx/
-[ -f /data/root/iptv.conf ] && ln -s /data/root/iptv.conf /etc/nginx/conf.d/
+for CONF in `ls /data/root/*.ngx 2>&-`; do ln -s $CONF /etc/nginx/conf.d/; done
 /etc/init.d/nginx restart
 
 # SMB

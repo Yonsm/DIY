@@ -280,10 +280,10 @@ proxy() {
 }
 
 resolve() {
-	[ $_OS = MACOS ] && return
+	echo $_HOST | grep -qv '[^0-9.]' && return
 
 	CNT=0
-	while [ $CNT -le 20 ]; do
+	while [ $CNT -le 30 ]; do
 		local IP=`nslookup $_HOST | awk -F": " '/^Address/ {if (NR>4){print $2;exit 1}}' | cut -d' ' -f 1`
 		log $1 "Resolve $_HOST=>$IP"
 		case "$IP" in
@@ -294,7 +294,7 @@ resolve() {
 			return
 			;;
 		esac
-		sleep 3
+		sleep 5
 		let CNT++
 	done
 }
@@ -379,6 +379,7 @@ start() {
 		;;
 	esac
 
+	touch /tmp/wing.log
 	proxy $1 $_PROT 127.0.0.1 1080
 
 	if [ $1 -ge 4 ]; then
@@ -405,7 +406,7 @@ stop() {
 	if [ $_MODE = ROUTER ]; then
 		ipset flush gfwlist
 		ipset destroy gfwlist
-		[ "$1" == "-R" ] && return
+		[ "$1" == "-R" ] && sleep 1 && return
 
 		prepare
 
@@ -442,7 +443,6 @@ stop)
 	;;
 restart)
 	stop -R
-	sleep 1
 	start 5 "$2"
 	;;
 pause)
@@ -470,6 +470,7 @@ update)
 	start ${1:2} "$2"
 	;;
 *)
-	$0 start "$1" &
+	[ -f /tmp/wing.log ] && stop -R
+	start 5 "$1"
 	;;
 esac

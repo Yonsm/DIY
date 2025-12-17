@@ -5,7 +5,7 @@ if [ ! -f /root/.profile ]; then
 mount --bind /data/root /root
 
 # SSH
-#ip6tables -I INPUT  -p tcp --dport 92 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 91 -j ACCEPT
 host_key=/etc/dropbear/dropbear_rsa_host_key
 host_key_bk=/data/root/dropbear_rsa_host_key
 [ -f $host_key_bk ] && ln -sf $host_key_bk $host_key
@@ -35,11 +35,11 @@ if [ ! -f /usr/libexec/sftp-server ] && [ -f /data/other/libexec/sftp-server ]; 
 fi
 
 # HTTPS
-#ip6tables -I INPUT  -p tcp --dport 82 -j ACCEPT
-#ip6tables -I INPUT  -p tcp --dport 90 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 81 -j ACCEPT
+ip6tables -I INPUT  -p tcp --dport 84 -j ACCEPT
 sed -i 's#isluci "0"#isluci "1"#g' /etc/nginx/miwifi-webinitrd.conf
 sed -i 's#include /etc#include\t/data/root/nginx/*.conf;\n\tinclude\t/etc#' /etc/nginx/nginx.conf
-sed -i -e '/\[::\]:443/d' -e 's/443/82 ssl; listen [::]:82/' /etc/nginx/conf.d/443.conf
+#sed -i -e '/\[::\]:443/d' -e 's/443/81 ssl; listen [::]:81/' /etc/nginx/conf.d/443.conf
 [ -f /data/root/cert.key ] && sed -i 's# .*cert.# /data/root/cert.#g' /etc/nginx/conf.d/443.conf
 /etc/init.d/nginx restart
 

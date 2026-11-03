@@ -16,7 +16,7 @@ while ! ping -c 1 -W 2 apple.com >/dev/null 2>&1; do
 done
 
 # MIHEX
-[ -f /data/other/mihex/mihex.py ] && /data/other/mihex/mihex.py -V &
+[ -f /data/root/mihex.yaml ] && /data/other/xpkg/usr/sbin/screen -dmS mihex /data/other/xpkg/usr/bin/mihex
 
 # FRP
 [ -f /data/root/frpc.ini ] && /data/other/xpkg/usr/bin/frpc -c /data/root/frpc.ini &
